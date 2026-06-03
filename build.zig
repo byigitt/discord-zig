@@ -35,29 +35,22 @@ pub fn build(b: *std.Build) void {
     const test_step = b.step("test", "Run unit tests");
     test_step.dependOn(&run_tests.step);
 
-    const example_module = b.createModule(.{
-        .root_source_file = b.path("examples/ping_bot.zig"),
-        .target = target,
-        .optimize = optimize,
-    });
-    example_module.addImport("discord", discord);
-    const example = b.addExecutable(.{
-        .name = "ping_bot",
-        .root_module = example_module,
-    });
-    b.installArtifact(example);
-
-    const slash_example_module = b.createModule(.{
-        .root_source_file = b.path("examples/slash_bot.zig"),
-        .target = target,
-        .optimize = optimize,
-    });
-    slash_example_module.addImport("discord", discord);
-    const slash_example = b.addExecutable(.{
-        .name = "slash_bot",
-        .root_module = slash_example_module,
-    });
-    b.installArtifact(slash_example);
+    const simple_examples = [_]struct { name: []const u8, path: []const u8 }{
+        .{ .name = "ping_bot", .path = "examples/ping_bot.zig" },
+        .{ .name = "slash_bot", .path = "examples/slash_bot.zig" },
+        .{ .name = "echo_bot", .path = "examples/echo_bot.zig" },
+        .{ .name = "rich_message", .path = "examples/rich_message.zig" },
+    };
+    for (simple_examples) |example| {
+        const module = b.createModule(.{
+            .root_source_file = b.path(example.path),
+            .target = target,
+            .optimize = optimize,
+        });
+        module.addImport("discord", discord);
+        const exe = b.addExecutable(.{ .name = example.name, .root_module = module });
+        b.installArtifact(exe);
+    }
 
     const discord_token = b.option([]const u8, "discord_token", "Bot token for the e2e_check live test") orelse "";
     const e2e_options = b.addOptions();
