@@ -1450,4 +1450,4 @@ const mode = discord.Voice.EncryptionMode.preferredMode(&offered);
 
 ## Status
 
-This is an early core, not a full Discord.js replacement yet. The next large pieces are broader API model coverage and deeper runtime integrations. See `STATUS.md` for the current coverage map.
+This is an early, dependency-light core rather than a full Discord.js replacement. The REST client and gateway are verified end to end against the live Discord API (see `examples/e2e_check.zig`); the next large pieces are broader API model coverage and deeper runtime integrations.
