@@ -1175,8 +1175,8 @@ _ = try client.setGuildApplicationCommandDescription(application_id, guild_id, c
 _ = try client.removeGuildApplicationCommand(application_id, guild_id, command_id);
 ```
 
-Builder count limits can be checked locally before a REST round-trip, turning a
-guaranteed Discord `400` into an allocation-free error:
+Builder and message payload limits can be checked locally before a REST
+round-trip, turning a guaranteed Discord `400` into an allocation-free error:
 
 ```zig
 try discord.Interactions.ApplicationCommand
@@ -1195,7 +1195,18 @@ try discord.Interactions.Component.validateLayout(&rows);
 const embed_fields = [_]discord.Types.EmbedField{
     discord.Types.EmbedField.init("Status", "ok"),
 };
-try discord.Types.Embed.init().withFields(&embed_fields).validate();
+const embeds = [_]discord.Types.Embed{
+    discord.Types.Embed.init().withFields(&embed_fields),
+};
+try embeds[0].validate();
+
+try discord.Types.CreateMessage.init("ready")
+    .withEmbeds(&embeds)
+    .withComponents(&rows)
+    .validate();
+try discord.Types.EditMessage.init()
+    .withContent("updated")
+    .validate();
 ```
 
 Application command permissions use Discord's Bearer-token flow:
@@ -1450,4 +1461,4 @@ const mode = discord.Voice.EncryptionMode.preferredMode(&offered);
 
 ## Status
 
-This is an early, dependency-light core rather than a full Discord.js replacement. The REST client and gateway are verified end to end against the live Discord API (see `examples/e2e_check.zig`); the next large pieces are broader API model coverage and deeper runtime integrations.
+This is a dependency-light Zig foundation for common Discord.js bot workloads rather than a one-to-one class-model port. REST, Gateway, interactions, interaction router registries, command registries/modules/manifests/annotations, components, cache updates, validation helpers, forum thread starters, group DM recipients, webhook multipart sends, richer collections, subscription/rate-limit events, Discord.js-style builder aliases, template/webhook link helpers, expanded CDN asset helpers, voice gateway bootstrap/control-plane helpers, encrypted RTP receive helpers, SSRC-to-user receive buffering, Opus frame validation, PCM mixing, pluggable Opus codec adapters, owned encoded-Opus resources, pre-encoded Opus audio player packetization, shard identify/cluster/latency/process-spec/supervisor/IPC router/broadcast helpers, and emoji/premium component builders are covered for practical bot usage; bundled native Opus codecs, advanced process-manager clustering, decorators, and exhaustive framework-style Discord.js class parity stay outside the core boundary. See `STATUS.md` and `DISCORDJS_COMPARISON.md` for the current coverage map.
