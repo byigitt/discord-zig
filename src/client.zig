@@ -224,6 +224,27 @@ pub const Client = struct {
         try session.updateVoiceState(update);
     }
 
+    pub fn joinVoiceChannel(
+        self: *Client,
+        session: *GatewaySession.Session,
+        guild_id: Snowflake,
+        channel_id: Snowflake,
+        self_mute: bool,
+        self_deaf: bool,
+    ) !void {
+        try self.updateVoiceState(
+            session,
+            Gateway.VoiceStateUpdate.init(guild_id)
+                .withChannel(channel_id)
+                .muteState(self_mute)
+                .deafState(self_deaf),
+        );
+    }
+
+    pub fn leaveVoiceChannel(self: *Client, session: *GatewaySession.Session, guild_id: Snowflake) !void {
+        try self.updateVoiceState(session, Gateway.VoiceStateUpdate.init(guild_id).clearChannel());
+    }
+
     pub fn requestGuildMembers(self: *Client, session: *GatewaySession.Session, request: Gateway.RequestGuildMembers) !void {
         _ = self;
         try session.requestGuildMembers(request);
@@ -501,6 +522,30 @@ pub const Client = struct {
 
     pub fn onceEntitlementDelete(self: *Client, handler: Events.RawHandler) void {
         self.once(.ENTITLEMENT_DELETE, handler);
+    }
+
+    pub fn onSubscriptionCreate(self: *Client, handler: Events.RawHandler) void {
+        self.events.onSubscriptionCreate(handler);
+    }
+
+    pub fn onceSubscriptionCreate(self: *Client, handler: Events.RawHandler) void {
+        self.once(.SUBSCRIPTION_CREATE, handler);
+    }
+
+    pub fn onSubscriptionUpdate(self: *Client, handler: Events.RawHandler) void {
+        self.events.onSubscriptionUpdate(handler);
+    }
+
+    pub fn onceSubscriptionUpdate(self: *Client, handler: Events.RawHandler) void {
+        self.once(.SUBSCRIPTION_UPDATE, handler);
+    }
+
+    pub fn onSubscriptionDelete(self: *Client, handler: Events.RawHandler) void {
+        self.events.onSubscriptionDelete(handler);
+    }
+
+    pub fn onceSubscriptionDelete(self: *Client, handler: Events.RawHandler) void {
+        self.once(.SUBSCRIPTION_DELETE, handler);
     }
 
     pub fn onGuildCreate(self: *Client, handler: Events.RawHandler) void {
@@ -909,6 +954,14 @@ pub const Client = struct {
 
     pub fn onceThreadMembersUpdate(self: *Client, handler: Events.RawHandler) void {
         self.once(.THREAD_MEMBERS_UPDATE, handler);
+    }
+
+    pub fn onRateLimited(self: *Client, handler: Events.RawHandler) void {
+        self.events.onRateLimited(handler);
+    }
+
+    pub fn onceRateLimited(self: *Client, handler: Events.RawHandler) void {
+        self.once(.RATE_LIMITED, handler);
     }
 
     pub fn onUnknown(self: *Client, handler: Events.RawHandler) void {
@@ -1380,6 +1433,10 @@ pub const Client = struct {
         return self.rest.leaveGuild(guild_id);
     }
 
+    pub fn createGuild(self: *Client, payload: Types.CreateGuild) !Rest.Response {
+        return self.rest.createGuild(payload);
+    }
+
     pub fn getGuild(self: *Client, guild_id: Snowflake) !Rest.Response {
         return self.rest.getGuild(guild_id);
     }
@@ -1398,6 +1455,10 @@ pub const Client = struct {
 
     pub fn editGuild(self: *Client, guild_id: Snowflake, payload: Types.EditGuild) !Rest.Response {
         return self.rest.editGuild(guild_id, payload);
+    }
+
+    pub fn deleteGuild(self: *Client, guild_id: Snowflake) !Rest.Response {
+        return self.rest.deleteGuild(guild_id);
     }
 
     pub fn getGuildPreview(self: *Client, guild_id: Snowflake) !Rest.Response {
@@ -1459,6 +1520,10 @@ pub const Client = struct {
 
     pub fn fetchGuildTemplate(self: *Client, code: []const u8) !Rest.Response {
         return self.getGuildTemplate(code);
+    }
+
+    pub fn createGuildFromTemplate(self: *Client, code: []const u8, payload: Types.CreateGuildFromTemplate) !Rest.Response {
+        return self.rest.createGuildFromTemplate(code, payload);
     }
 
     pub fn listGuildTemplates(self: *Client, guild_id: Snowflake) !Rest.Response {
@@ -2673,6 +2738,18 @@ pub const Client = struct {
         return self.createThread(channel_id, Types.CreateThread.init(name));
     }
 
+    pub fn createForumThread(self: *Client, channel_id: Snowflake, payload: Types.CreateForumThread) !Rest.Response {
+        return self.rest.createForumThread(channel_id, payload);
+    }
+
+    pub fn startThreadInForum(self: *Client, channel_id: Snowflake, payload: Types.CreateForumThread) !Rest.Response {
+        return self.createForumThread(channel_id, payload);
+    }
+
+    pub fn startThreadInMedia(self: *Client, channel_id: Snowflake, payload: Types.CreateForumThread) !Rest.Response {
+        return self.createForumThread(channel_id, payload);
+    }
+
     pub fn listActiveGuildThreads(self: *Client, guild_id: Snowflake) !Rest.Response {
         return self.rest.listActiveGuildThreads(guild_id);
     }
@@ -2802,6 +2879,19 @@ pub const Client = struct {
         name: []const u8,
     ) !Rest.Response {
         return self.createThreadFromMessage(channel_id, message_id, Types.CreateThreadFromMessage.init(name));
+    }
+
+    pub fn addGroupDmRecipient(
+        self: *Client,
+        channel_id: Snowflake,
+        user_id: Snowflake,
+        payload: Types.AddGroupDmRecipient,
+    ) !Rest.Response {
+        return self.rest.addGroupDmRecipient(channel_id, user_id, payload);
+    }
+
+    pub fn removeGroupDmRecipient(self: *Client, channel_id: Snowflake, user_id: Snowflake) !Rest.Response {
+        return self.rest.removeGroupDmRecipient(channel_id, user_id);
     }
 
     pub fn createInvite(self: *Client, channel_id: Snowflake, payload: Types.CreateChannelInvite) !Rest.Response {
@@ -2986,6 +3076,27 @@ pub const Client = struct {
         content: []const u8,
     ) !Rest.Response {
         return self.executeWebhook(webhook_id, webhook_token, Types.ExecuteWebhook.init(content));
+    }
+
+    pub fn executeWebhookWithFiles(
+        self: *Client,
+        webhook_id: Snowflake,
+        webhook_token: []const u8,
+        payload: Types.ExecuteWebhook,
+        files: []const Types.UploadFile,
+    ) !Rest.Response {
+        return self.rest.executeWebhookWithFiles(webhook_id, webhook_token, payload, files);
+    }
+
+    pub fn executeWebhookWithOptionsAndFiles(
+        self: *Client,
+        webhook_id: Snowflake,
+        webhook_token: []const u8,
+        options: Types.ExecuteWebhookQuery,
+        payload: Types.ExecuteWebhook,
+        files: []const Types.UploadFile,
+    ) !Rest.Response {
+        return self.rest.executeWebhookWithOptionsAndFiles(webhook_id, webhook_token, options, payload, files);
     }
 
     pub fn getWebhookMessage(
@@ -6361,6 +6472,25 @@ test "client convenience send reply and react delegate to REST" {
     try std.testing.expectEqualStrings("", memory.last_request.?.token);
     try std.testing.expectEqualStrings("{\"content\":\"deploy shortcut\"}", memory.last_request.?.body.?);
 
+    const webhook_files = [_]Types.UploadFile{
+        Types.UploadFile.init("deploy.txt", "ship").withContentType("text/plain"),
+    };
+    _ = try client.executeWebhookWithFiles(
+        Snowflake.init(30),
+        "tok en",
+        Types.ExecuteWebhook.init("deploy with file"),
+        &webhook_files,
+    );
+    try std.testing.expectEqual(.POST, memory.last_request.?.method);
+    try std.testing.expectEqualStrings("https://discord.com/api/v10/webhooks/30/tok%20en", memory.last_request.?.url);
+    try std.testing.expectEqualStrings("", memory.last_request.?.token);
+    try std.testing.expectEqualStrings(
+        "multipart/form-data; boundary=discord-zig-boundary",
+        memory.last_request.?.content_type.?,
+    );
+    try std.testing.expect(std.mem.indexOf(u8, memory.last_request.?.body.?, "\"content\":\"deploy with file\"") != null);
+    try std.testing.expect(std.mem.indexOf(u8, memory.last_request.?.body.?, "name=\"files[0]\"; filename=\"deploy.txt\"") != null);
+
     _ = try client.getWebhookMessage(Snowflake.init(30), "tok en", Snowflake.init(50));
     try std.testing.expectEqual(.GET, memory.last_request.?.method);
     try std.testing.expectEqualStrings("https://discord.com/api/v10/webhooks/30/tok%20en/messages/50", memory.last_request.?.url);
@@ -6894,10 +7024,13 @@ test "client auto moderation event convenience registers handlers" {
     try std.testing.expect(state.action_executed);
 }
 
-test "client entitlement event convenience registers handlers" {
+test "client entitlement and subscription event convenience registers handlers" {
     const State = struct {
         created: bool = false,
         deleted: bool = false,
+        subscription_created: bool = false,
+        subscription_updated: bool = false,
+        subscription_deleted: bool = false,
 
         fn onEntitlementCreate(self: *@This(), dispatch: Gateway.ParsedDispatch) !void {
             try std.testing.expectEqual(Gateway.EventName.ENTITLEMENT_CREATE, dispatch.event);
@@ -6907,6 +7040,21 @@ test "client entitlement event convenience registers handlers" {
         fn onEntitlementDelete(self: *@This(), dispatch: Gateway.ParsedDispatch) !void {
             try std.testing.expectEqual(Gateway.EventName.ENTITLEMENT_DELETE, dispatch.event);
             self.deleted = true;
+        }
+
+        fn onSubscriptionCreate(self: *@This(), dispatch: Gateway.ParsedDispatch) !void {
+            try std.testing.expectEqual(Gateway.EventName.SUBSCRIPTION_CREATE, dispatch.event);
+            self.subscription_created = true;
+        }
+
+        fn onSubscriptionUpdate(self: *@This(), dispatch: Gateway.ParsedDispatch) !void {
+            try std.testing.expectEqual(Gateway.EventName.SUBSCRIPTION_UPDATE, dispatch.event);
+            self.subscription_updated = true;
+        }
+
+        fn onSubscriptionDelete(self: *@This(), dispatch: Gateway.ParsedDispatch) !void {
+            try std.testing.expectEqual(Gateway.EventName.SUBSCRIPTION_DELETE, dispatch.event);
+            self.subscription_deleted = true;
         }
     };
 
@@ -6925,6 +7073,9 @@ test "client entitlement event convenience registers handlers" {
 
     client.onEntitlementCreate(Events.rawHandler(&state, State.onEntitlementCreate));
     client.onEntitlementDelete(Events.rawHandler(&state, State.onEntitlementDelete));
+    client.onSubscriptionCreate(Events.rawHandler(&state, State.onSubscriptionCreate));
+    client.onSubscriptionUpdate(Events.rawHandler(&state, State.onSubscriptionUpdate));
+    client.onSubscriptionDelete(Events.rawHandler(&state, State.onSubscriptionDelete));
 
     _ = try client.dispatchGatewayPayload(
         "{\"op\":0,\"s\":1,\"t\":\"ENTITLEMENT_CREATE\",\"d\":{\"id\":\"10\",\"sku_id\":\"20\",\"application_id\":\"30\",\"type\":8,\"deleted\":false}}",
@@ -6935,6 +7086,19 @@ test "client entitlement event convenience registers handlers" {
         "{\"op\":0,\"s\":2,\"t\":\"ENTITLEMENT_DELETE\",\"d\":{\"id\":\"10\",\"sku_id\":\"20\",\"application_id\":\"30\",\"type\":8,\"deleted\":true}}",
     );
     try std.testing.expect(state.deleted);
+
+    _ = try client.dispatchGatewayPayload(
+        "{\"op\":0,\"s\":3,\"t\":\"SUBSCRIPTION_CREATE\",\"d\":{\"id\":\"40\",\"user_id\":\"50\",\"sku_ids\":[\"20\"],\"entitlement_ids\":[\"10\"],\"current_period_start\":\"2026-01-01T00:00:00.000000+00:00\",\"current_period_end\":\"2026-02-01T00:00:00.000000+00:00\",\"status\":0}}",
+    );
+    _ = try client.dispatchGatewayPayload(
+        "{\"op\":0,\"s\":4,\"t\":\"SUBSCRIPTION_UPDATE\",\"d\":{\"id\":\"40\",\"user_id\":\"50\",\"sku_ids\":[\"20\"],\"entitlement_ids\":[\"10\"],\"current_period_start\":\"2026-01-01T00:00:00.000000+00:00\",\"current_period_end\":\"2026-02-01T00:00:00.000000+00:00\",\"status\":1}}",
+    );
+    _ = try client.dispatchGatewayPayload(
+        "{\"op\":0,\"s\":5,\"t\":\"SUBSCRIPTION_DELETE\",\"d\":{\"id\":\"40\",\"user_id\":\"50\",\"sku_ids\":[\"20\"],\"entitlement_ids\":[\"10\"],\"current_period_start\":\"2026-01-01T00:00:00.000000+00:00\",\"current_period_end\":\"2026-02-01T00:00:00.000000+00:00\",\"status\":2}}",
+    );
+    try std.testing.expect(state.subscription_created);
+    try std.testing.expect(state.subscription_updated);
+    try std.testing.expect(state.subscription_deleted);
 }
 
 test "client soundboard event convenience registers handlers" {
@@ -7001,6 +7165,7 @@ test "client runtime event convenience registers handlers" {
         channel_info: bool = false,
         voice_status_updated: bool = false,
         voice_start_time_updated: bool = false,
+        rate_limited: bool = false,
 
         fn onApplicationCommandPermissionsUpdate(self: *@This(), dispatch: Gateway.ParsedDispatch) !void {
             try std.testing.expectEqual(Gateway.EventName.APPLICATION_COMMAND_PERMISSIONS_UPDATE, dispatch.event);
@@ -7036,6 +7201,11 @@ test "client runtime event convenience registers handlers" {
             try std.testing.expectEqual(Gateway.EventName.VOICE_CHANNEL_START_TIME_UPDATE, dispatch.event);
             self.voice_start_time_updated = true;
         }
+
+        fn onRateLimited(self: *@This(), dispatch: Gateway.ParsedDispatch) !void {
+            try std.testing.expectEqual(Gateway.EventName.RATE_LIMITED, dispatch.event);
+            self.rate_limited = true;
+        }
     };
 
     var memory = Rest.MemoryTransport.init(std.testing.allocator, .{
@@ -7058,6 +7228,7 @@ test "client runtime event convenience registers handlers" {
     client.onChannelInfo(Events.rawHandler(&state, State.onChannelInfo));
     client.onVoiceChannelStatusUpdate(Events.rawHandler(&state, State.onVoiceChannelStatusUpdate));
     client.onVoiceChannelStartTimeUpdate(Events.rawHandler(&state, State.onVoiceChannelStartTimeUpdate));
+    client.onRateLimited(Events.rawHandler(&state, State.onRateLimited));
 
     _ = try client.dispatchGatewayPayload("{\"op\":0,\"s\":1,\"t\":\"APPLICATION_COMMAND_PERMISSIONS_UPDATE\",\"d\":{}}");
     _ = try client.dispatchGatewayPayload("{\"op\":0,\"s\":2,\"t\":\"GUILD_AUDIT_LOG_ENTRY_CREATE\",\"d\":{}}");
@@ -7066,6 +7237,7 @@ test "client runtime event convenience registers handlers" {
     _ = try client.dispatchGatewayPayload("{\"op\":0,\"s\":5,\"t\":\"CHANNEL_INFO\",\"d\":{}}");
     _ = try client.dispatchGatewayPayload("{\"op\":0,\"s\":6,\"t\":\"VOICE_CHANNEL_STATUS_UPDATE\",\"d\":{}}");
     _ = try client.dispatchGatewayPayload("{\"op\":0,\"s\":7,\"t\":\"VOICE_CHANNEL_START_TIME_UPDATE\",\"d\":{}}");
+    _ = try client.dispatchGatewayPayload("{\"op\":0,\"s\":8,\"t\":\"RATE_LIMITED\",\"d\":{\"retry_after\":1,\"limit\":1,\"method\":\"GET\",\"route\":\"/test\"}}");
 
     try std.testing.expect(state.permissions_updated);
     try std.testing.expect(state.audit_log_entry_created);
@@ -7074,6 +7246,7 @@ test "client runtime event convenience registers handlers" {
     try std.testing.expect(state.channel_info);
     try std.testing.expect(state.voice_status_updated);
     try std.testing.expect(state.voice_start_time_updated);
+    try std.testing.expect(state.rate_limited);
 }
 
 test "client supports generic one-shot event listeners" {
@@ -8373,6 +8546,21 @@ test "client updates presence through gateway session" {
     try std.testing.expectEqual(@as(usize, 6), gateway_memory.sent.items.len);
     try std.testing.expect(std.mem.indexOf(u8, gateway_memory.sent.items[5], "\"op\":4") != null);
     try std.testing.expect(std.mem.indexOf(u8, gateway_memory.sent.items[5], "\"self_deaf\":true") != null);
+
+    try client.joinVoiceChannel(
+        &session,
+        Snowflake.init(10),
+        Snowflake.init(30),
+        true,
+        false,
+    );
+    try std.testing.expectEqual(@as(usize, 7), gateway_memory.sent.items.len);
+    try std.testing.expect(std.mem.indexOf(u8, gateway_memory.sent.items[6], "\"channel_id\":\"30\"") != null);
+    try std.testing.expect(std.mem.indexOf(u8, gateway_memory.sent.items[6], "\"self_mute\":true") != null);
+
+    try client.leaveVoiceChannel(&session, Snowflake.init(10));
+    try std.testing.expectEqual(@as(usize, 8), gateway_memory.sent.items.len);
+    try std.testing.expect(std.mem.indexOf(u8, gateway_memory.sent.items[7], "\"channel_id\":null") != null);
 }
 
 test "gateway runner dispatches through cache and event handlers" {

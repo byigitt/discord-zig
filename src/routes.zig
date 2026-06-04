@@ -56,6 +56,35 @@ pub fn deleteChannel(allocator: std.mem.Allocator, channel_id: Snowflake) !Route
     return channelRoute(allocator, .DELETE, channel_id);
 }
 
+pub fn addGroupDmRecipient(allocator: std.mem.Allocator, channel_id: Snowflake, user_id: Snowflake) !Route {
+    return groupDmRecipientRoute(allocator, .PUT, channel_id, user_id);
+}
+
+pub fn removeGroupDmRecipient(allocator: std.mem.Allocator, channel_id: Snowflake, user_id: Snowflake) !Route {
+    return groupDmRecipientRoute(allocator, .DELETE, channel_id, user_id);
+}
+
+fn groupDmRecipientRoute(
+    allocator: std.mem.Allocator,
+    method: Method,
+    channel_id: Snowflake,
+    user_id: Snowflake,
+) !Route {
+    const path = try std.fmt.allocPrint(
+        allocator,
+        "/channels/{d}/recipients/{d}",
+        .{ channel_id.value, user_id.value },
+    );
+    errdefer allocator.free(path);
+    const bucket_path = try allocator.dupe(u8, "/channels/{channel_id}/recipients/{user_id}");
+    return .{
+        .method = method,
+        .path = path,
+        .bucket_path = bucket_path,
+        .major_parameter = channel_id,
+    };
+}
+
 fn channelRoute(allocator: std.mem.Allocator, method: Method, channel_id: Snowflake) !Route {
     const path = try std.fmt.allocPrint(allocator, "/channels/{d}", .{channel_id.value});
     errdefer allocator.free(path);
@@ -741,6 +770,13 @@ pub fn user(allocator: std.mem.Allocator, user_id: Snowflake) !Route {
     };
 }
 
+pub fn createGuild(allocator: std.mem.Allocator) !Route {
+    const path = try allocator.dupe(u8, "/guilds");
+    errdefer allocator.free(path);
+    const bucket_path = try allocator.dupe(u8, "/guilds");
+    return .{ .method = .POST, .path = path, .bucket_path = bucket_path };
+}
+
 pub fn guild(allocator: std.mem.Allocator, guild_id: Snowflake) !Route {
     return guildRoute(allocator, .GET, guild_id);
 }
@@ -751,6 +787,10 @@ pub fn guildWithOptions(allocator: std.mem.Allocator, guild_id: Snowflake, optio
 
 pub fn editGuild(allocator: std.mem.Allocator, guild_id: Snowflake) !Route {
     return guildRoute(allocator, .PATCH, guild_id);
+}
+
+pub fn deleteGuild(allocator: std.mem.Allocator, guild_id: Snowflake) !Route {
+    return guildRoute(allocator, .DELETE, guild_id);
 }
 
 fn guildRoute(allocator: std.mem.Allocator, method: Method, guild_id: Snowflake) !Route {
@@ -858,6 +898,16 @@ pub fn guildTemplate(allocator: std.mem.Allocator, code: []const u8) !Route {
     errdefer allocator.free(path);
     const bucket_path = try allocator.dupe(u8, "/guilds/templates/{template_code}");
     return .{ .method = .GET, .path = path, .bucket_path = bucket_path };
+}
+
+pub fn createGuildFromTemplate(allocator: std.mem.Allocator, code: []const u8) !Route {
+    const escaped_code = try percentEncode(allocator, code);
+    defer allocator.free(escaped_code);
+
+    const path = try std.fmt.allocPrint(allocator, "/guilds/templates/{s}", .{escaped_code});
+    errdefer allocator.free(path);
+    const bucket_path = try allocator.dupe(u8, "/guilds/templates/{template_code}");
+    return .{ .method = .POST, .path = path, .bucket_path = bucket_path };
 }
 
 pub fn guildTemplates(allocator: std.mem.Allocator, guild_id: Snowflake) !Route {
@@ -3168,6 +3218,33 @@ test "thread routes keep channel as major parameter" {
         "POST:/channels/{channel_id}/messages/{message_id}/threads:42",
         message_key,
     );
+}
+
+test "guild lifecycle and group DM recipient routes use expected paths" {
+    const create_guild = try createGuild(std.testing.allocator);
+    defer create_guild.deinit(std.testing.allocator);
+    try std.testing.expectEqual(.POST, create_guild.method);
+    try std.testing.expectEqualStrings("/guilds", create_guild.path);
+
+    const delete_guild = try deleteGuild(std.testing.allocator, Snowflake.init(99));
+    defer delete_guild.deinit(std.testing.allocator);
+    try std.testing.expectEqual(.DELETE, delete_guild.method);
+    try std.testing.expectEqualStrings("/guilds/99", delete_guild.path);
+
+    const from_template = try createGuildFromTemplate(std.testing.allocator, "starter pack");
+    defer from_template.deinit(std.testing.allocator);
+    try std.testing.expectEqual(.POST, from_template.method);
+    try std.testing.expectEqualStrings("/guilds/templates/starter%20pack", from_template.path);
+
+    const add_recipient = try addGroupDmRecipient(std.testing.allocator, Snowflake.init(10), Snowflake.init(20));
+    defer add_recipient.deinit(std.testing.allocator);
+    try std.testing.expectEqual(.PUT, add_recipient.method);
+    try std.testing.expectEqualStrings("/channels/10/recipients/20", add_recipient.path);
+
+    const remove_recipient = try removeGroupDmRecipient(std.testing.allocator, Snowflake.init(10), Snowflake.init(20));
+    defer remove_recipient.deinit(std.testing.allocator);
+    try std.testing.expectEqual(.DELETE, remove_recipient.method);
+    try std.testing.expectEqualStrings("/channels/10/recipients/20", remove_recipient.path);
 }
 
 test "thread member routes keep thread as major parameter" {

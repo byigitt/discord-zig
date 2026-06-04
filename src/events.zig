@@ -44,6 +44,9 @@ pub const Dispatcher = struct {
     entitlement_create: ?RawHandler = null,
     entitlement_update: ?RawHandler = null,
     entitlement_delete: ?RawHandler = null,
+    subscription_create: ?RawHandler = null,
+    subscription_update: ?RawHandler = null,
+    subscription_delete: ?RawHandler = null,
     guild_create: ?RawHandler = null,
     guild_update: ?RawHandler = null,
     guild_delete: ?RawHandler = null,
@@ -95,6 +98,7 @@ pub const Dispatcher = struct {
     thread_list_sync: ?RawHandler = null,
     thread_member_update: ?RawHandler = null,
     thread_members_update: ?RawHandler = null,
+    rate_limited: ?RawHandler = null,
     unknown: ?RawHandler = null,
     once_events: std.EnumSet(Gateway.EventName) = .initEmpty(),
 
@@ -271,6 +275,18 @@ pub const Dispatcher = struct {
 
     pub fn onEntitlementDelete(self: *Dispatcher, handler: RawHandler) void {
         self.on(.ENTITLEMENT_DELETE, handler);
+    }
+
+    pub fn onSubscriptionCreate(self: *Dispatcher, handler: RawHandler) void {
+        self.on(.SUBSCRIPTION_CREATE, handler);
+    }
+
+    pub fn onSubscriptionUpdate(self: *Dispatcher, handler: RawHandler) void {
+        self.on(.SUBSCRIPTION_UPDATE, handler);
+    }
+
+    pub fn onSubscriptionDelete(self: *Dispatcher, handler: RawHandler) void {
+        self.on(.SUBSCRIPTION_DELETE, handler);
     }
 
     pub fn onGuildCreate(self: *Dispatcher, handler: RawHandler) void {
@@ -477,6 +493,10 @@ pub const Dispatcher = struct {
         self.on(.THREAD_MEMBERS_UPDATE, handler);
     }
 
+    pub fn onRateLimited(self: *Dispatcher, handler: RawHandler) void {
+        self.on(.RATE_LIMITED, handler);
+    }
+
     pub fn onUnknown(self: *Dispatcher, handler: RawHandler) void {
         self.on(.unknown, handler);
     }
@@ -574,6 +594,9 @@ pub const Dispatcher = struct {
             .ENTITLEMENT_CREATE => &self.entitlement_create,
             .ENTITLEMENT_UPDATE => &self.entitlement_update,
             .ENTITLEMENT_DELETE => &self.entitlement_delete,
+            .SUBSCRIPTION_CREATE => &self.subscription_create,
+            .SUBSCRIPTION_UPDATE => &self.subscription_update,
+            .SUBSCRIPTION_DELETE => &self.subscription_delete,
             .GUILD_CREATE => &self.guild_create,
             .GUILD_UPDATE => &self.guild_update,
             .GUILD_DELETE => &self.guild_delete,
@@ -625,6 +648,7 @@ pub const Dispatcher = struct {
             .THREAD_LIST_SYNC => &self.thread_list_sync,
             .THREAD_MEMBER_UPDATE => &self.thread_member_update,
             .THREAD_MEMBERS_UPDATE => &self.thread_members_update,
+            .RATE_LIMITED => &self.rate_limited,
             .unknown => &self.unknown,
         };
     }

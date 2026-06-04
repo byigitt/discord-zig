@@ -38,11 +38,11 @@ pub fn main() !void {
         discord.Interactions.Component.actionRow(&buttons),
         discord.Interactions.Component.actionRow(&select_row),
     };
-    try discord.Interactions.Component.validateLayout(&components);
 
     const message = discord.Types.CreateMessage.init("Welcome to discord.zig!")
         .withEmbeds(&embeds)
         .withComponents(&components);
+    try message.validate();
 
     var out = std.Io.Writer.Allocating.init(allocator);
     defer out.deinit();

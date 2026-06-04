@@ -133,6 +133,8 @@ pub const Guild = struct {
     id: Snowflake,
     name: []const u8,
     icon: ?[]const u8 = null,
+    splash: ?[]const u8 = null,
+    discovery_splash: ?[]const u8 = null,
     banner: ?[]const u8 = null,
     owner_id: ?Snowflake = null,
     description: ?[]const u8 = null,
@@ -972,6 +974,7 @@ pub const Application = struct {
     id: Snowflake,
     name: []const u8,
     icon: ?[]const u8 = null,
+    cover_image: ?[]const u8 = null,
     description: []const u8 = "",
     bot_public: bool = true,
     bot_require_code_grant: bool = false,
@@ -2426,6 +2429,139 @@ pub const CreateGuildChannel = struct {
             .default_forum_layout = self.default_forum_layout,
         }, writer, &needs_comma);
 
+        try writer.writeByte('}');
+    }
+};
+
+pub const CreateGuild = struct {
+    name: []const u8,
+    icon: ?[]const u8 = null,
+    verification_level: ?u8 = null,
+    default_message_notifications: ?u8 = null,
+    explicit_content_filter: ?u8 = null,
+    roles: []const CreateGuildRole = &.{},
+    channels: []const CreateGuildChannel = &.{},
+    afk_channel_id: ?Snowflake = null,
+    afk_timeout: ?u32 = null,
+    system_channel_id: ?Snowflake = null,
+    system_channel_flags: ?u32 = null,
+
+    pub fn init(name: []const u8) CreateGuild {
+        return .{ .name = name };
+    }
+
+    pub fn withIcon(self: CreateGuild, icon: []const u8) CreateGuild {
+        var payload = self;
+        payload.icon = icon;
+        return payload;
+    }
+
+    pub fn withRoles(self: CreateGuild, roles: []const CreateGuildRole) CreateGuild {
+        var payload = self;
+        payload.roles = roles;
+        return payload;
+    }
+
+    pub fn withChannels(self: CreateGuild, channels: []const CreateGuildChannel) CreateGuild {
+        var payload = self;
+        payload.channels = channels;
+        return payload;
+    }
+
+    pub fn withVerificationLevel(self: CreateGuild, level: u8) CreateGuild {
+        var payload = self;
+        payload.verification_level = level;
+        return payload;
+    }
+
+    pub fn withDefaultMessageNotifications(self: CreateGuild, level: u8) CreateGuild {
+        var payload = self;
+        payload.default_message_notifications = level;
+        return payload;
+    }
+
+    pub fn withExplicitContentFilter(self: CreateGuild, level: u8) CreateGuild {
+        var payload = self;
+        payload.explicit_content_filter = level;
+        return payload;
+    }
+
+    pub fn withAfk(self: CreateGuild, channel_id: Snowflake, timeout: u32) CreateGuild {
+        var payload = self;
+        payload.afk_channel_id = channel_id;
+        payload.afk_timeout = timeout;
+        return payload;
+    }
+
+    pub fn withSystemChannel(self: CreateGuild, channel_id: Snowflake, flags: ?u32) CreateGuild {
+        var payload = self;
+        payload.system_channel_id = channel_id;
+        payload.system_channel_flags = flags;
+        return payload;
+    }
+
+    pub fn writeJson(self: CreateGuild, writer: anytype) !void {
+        try writer.writeByte('{');
+        var needs_comma = false;
+
+        try writeComma(writer, &needs_comma);
+        try writer.writeAll("\"name\":");
+        try Json.writeString(self.name, writer);
+        try writeOptionalStringField(writer, &needs_comma, "icon", self.icon);
+        try writeOptionalIntegerField(writer, &needs_comma, "verification_level", self.verification_level);
+        try writeOptionalIntegerField(
+            writer,
+            &needs_comma,
+            "default_message_notifications",
+            self.default_message_notifications,
+        );
+        try writeOptionalIntegerField(writer, &needs_comma, "explicit_content_filter", self.explicit_content_filter);
+        if (self.roles.len != 0) {
+            try writeComma(writer, &needs_comma);
+            try writer.writeAll("\"roles\":");
+            try writeCreateGuildRoleArray(self.roles, writer);
+        }
+        if (self.channels.len != 0) {
+            try writeComma(writer, &needs_comma);
+            try writer.writeAll("\"channels\":");
+            try writeCreateGuildChannelArray(self.channels, writer);
+        }
+        if (self.afk_channel_id) |channel_id| {
+            try writeComma(writer, &needs_comma);
+            try writer.print("\"afk_channel_id\":\"{d}\"", .{channel_id.value});
+        }
+        try writeOptionalIntegerField(writer, &needs_comma, "afk_timeout", self.afk_timeout);
+        if (self.system_channel_id) |channel_id| {
+            try writeComma(writer, &needs_comma);
+            try writer.print("\"system_channel_id\":\"{d}\"", .{channel_id.value});
+        }
+        try writeOptionalIntegerField(writer, &needs_comma, "system_channel_flags", self.system_channel_flags);
+
+        try writer.writeByte('}');
+    }
+};
+
+pub const CreateGuildFromTemplate = struct {
+    name: []const u8,
+    icon: ?[]const u8 = null,
+
+    pub fn init(name: []const u8) CreateGuildFromTemplate {
+        return .{ .name = name };
+    }
+
+    pub fn withIcon(self: CreateGuildFromTemplate, icon: []const u8) CreateGuildFromTemplate {
+        var payload = self;
+        payload.icon = icon;
+        return payload;
+    }
+
+    pub fn writeJson(self: CreateGuildFromTemplate, writer: anytype) !void {
+        try writer.writeByte('{');
+        var needs_comma = false;
+        try writeComma(writer, &needs_comma);
+        try writer.writeAll("\"name\":");
+        try Json.writeString(self.name, writer);
+        try writeOptionalStringField(writer, &needs_comma, "icon", self.icon);
         try writer.writeByte('}');
     }
 };
@@ -4907,6 +5043,29 @@ pub const CreateDmChannel = struct {
     }
 };
 
+pub const AddGroupDmRecipient = struct {
+    access_token: []const u8,
+    nick: ?[]const u8 = null,
+
+    pub fn init(access_token: []const u8) AddGroupDmRecipient {
+        return .{ .access_token = access_token };
+    }
+
+    pub fn withNick(self: AddGroupDmRecipient, nick: []const u8) AddGroupDmRecipient {
+        var payload = self;
+        payload.nick = nick;
+        return payload;
+    }
+
+    pub fn writeJson(self: AddGroupDmRecipient, writer: anytype) !void {
+        try writer.writeByte('{');
+        var needs_comma = false;
+        try writeOptionalStringField(writer, &needs_comma, "access_token", self.access_token);
+        try writeOptionalStringField(writer, &needs_comma, "nick", self.nick);
+        try writer.writeByte('}');
+    }
+};
+
 pub const CreateThreadFromMessage = struct {
     name: []const u8,
     auto_archive_duration: ?u16 = null,
@@ -4994,6 +5153,130 @@ pub const CreateThread = struct {
             .invitable = self.invitable,
         }, writer, &needs_comma);
 
+        try writer.writeByte('}');
+    }
+};
+
+pub const ForumThreadMessage = struct {
+    content: []const u8 = "",
+    embeds: []const Embed = &.{},
+    allowed_mentions: ?AllowedMentions = null,
+    components: []const Interactions.Component = &.{},
+    sticker_ids: []const Snowflake = &.{},
+    attachments: []const UploadFile = &.{},
+    flags: ?MessageFlags.Bit = null,
+
+    pub fn init(content: []const u8) ForumThreadMessage {
+        return .{ .content = content };
+    }
+
+    pub fn empty() ForumThreadMessage {
+        return .{};
+    }
+
+    pub fn withEmbeds(self: ForumThreadMessage, embeds: []const Embed) ForumThreadMessage {
+        var message = self;
+        message.embeds = embeds;
+        return message;
+    }
+
+    pub fn withAllowedMentions(self: ForumThreadMessage, allowed_mentions: AllowedMentions) ForumThreadMessage {
+        var message = self;
+        message.allowed_mentions = allowed_mentions;
+        return message;
+    }
+
+    pub fn withComponents(self: ForumThreadMessage, components: []const Interactions.Component) ForumThreadMessage {
+        var message = self;
+        message.components = components;
+        return message;
+    }
+
+    pub fn withStickers(self: ForumThreadMessage, sticker_ids: []const Snowflake) ForumThreadMessage {
+        var message = self;
+        message.sticker_ids = sticker_ids;
+        return message;
+    }
+
+    pub fn withAttachments(self: ForumThreadMessage, attachments: []const UploadFile) ForumThreadMessage {
+        var message = self;
+        message.attachments = attachments;
+        return message;
+    }
+
+    pub fn withFlags(self: ForumThreadMessage, flags: MessageFlags.Bit) ForumThreadMessage {
+        var message = self;
+        message.flags = flags;
+        return message;
+    }
+
+    pub fn writeJson(self: ForumThreadMessage, writer: anytype) !void {
+        try writer.writeByte('{');
+        var needs_comma = false;
+        try writeMessagePayloadFields(.{
+            .content = if (self.content.len != 0) self.content else null,
+            .embeds = self.embeds,
+            .sticker_ids = self.sticker_ids,
+            .allowed_mentions = self.allowed_mentions,
+            .components = self.components,
+            .flags = self.flags,
+        }, writer, &needs_comma);
+        if (self.attachments.len != 0) {
+            try writeComma(writer, &needs_comma);
+            try writer.writeAll("\"attachments\":");
+            try writeUploadAttachmentArray(self.attachments, writer);
+        }
+        try writer.writeByte('}');
+    }
+};
+
+pub const CreateForumThread = struct {
+    name: []const u8,
+    message: ForumThreadMessage,
+    auto_archive_duration: ?u16 = null,
+    rate_limit_per_user: ?u16 = null,
+    applied_tags: []const Snowflake = &.{},
+
+    pub fn init(name: []const u8, message: ForumThreadMessage) CreateForumThread {
+        return .{ .name = name, .message = message };
+    }
+
+    pub fn withAutoArchiveDuration(self: CreateForumThread, auto_archive_duration: u16) CreateForumThread {
+        var payload = self;
+        payload.auto_archive_duration = auto_archive_duration;
+        return payload;
+    }
+
+    pub fn withRateLimit(self: CreateForumThread, rate_limit_per_user: u16) CreateForumThread {
+        var payload = self;
+        payload.rate_limit_per_user = rate_limit_per_user;
+        return payload;
+    }
+
+    pub fn withAppliedTags(self: CreateForumThread, applied_tags: []const Snowflake) CreateForumThread {
+        var payload = self;
+        payload.applied_tags = applied_tags;
+        return payload;
+    }
+
+    pub fn writeJson(self: CreateForumThread, writer: anytype) !void {
+        try writer.writeByte('{');
+        var needs_comma = false;
+        try writeComma(writer, &needs_comma);
+        try writer.writeAll("\"name\":");
+        try Json.writeString(self.name, writer);
+        try writeThreadFields(.{
+            .auto_archive_duration = self.auto_archive_duration,
+            .rate_limit_per_user = self.rate_limit_per_user,
+        }, writer, &needs_comma);
+        try writeComma(writer, &needs_comma);
+        try writer.writeAll("\"message\":");
+        try self.message.writeJson(writer);
+        if (self.applied_tags.len != 0) {
+            try writeComma(writer, &needs_comma);
+            try writer.writeAll("\"applied_tags\":");
+            try writeSnowflakeStringArray(self.applied_tags, writer);
+        }
         try writer.writeByte('}');
     }
 };
@@ -5537,6 +5820,43 @@ pub const ExecuteWebhook = struct {
         try writer.writeByte('}');
     }
 };
+
+pub fn writeExecuteWebhookJsonWithAttachments(
+    payload: ExecuteWebhook,
+    files: []const UploadFile,
+    writer: anytype,
+) !void {
+    try writeExecuteWebhookJsonWithAttachmentMetadata(payload, files, writer);
+}
+
+pub fn writeExecuteWebhookJsonWithAttachmentMetadata(
+    payload: ExecuteWebhook,
+    files: anytype,
+    writer: anytype,
+) !void {
+    try writer.writeByte('{');
+    var needs_comma = false;
+    try writeMessagePayloadFields(.{
+        .content = if (payload.content.len != 0) payload.content else null,
+        .embeds = payload.embeds,
+        .allowed_mentions = payload.allowed_mentions,
+        .components = payload.components,
+        .flags = payload.flags,
+    }, writer, &needs_comma);
+    try writeOptionalStringField(writer, &needs_comma, "username", payload.username);
+    try writeOptionalStringField(writer, &needs_comma, "avatar_url", payload.avatar_url);
+    if (payload.tts) {
+        try writeComma(writer, &needs_comma);
+        try writer.writeAll("\"tts\":true");
+    }
+    try writeOptionalStringField(writer, &needs_comma, "thread_name", payload.thread_name);
+    if (files.len != 0) {
+        try writeComma(writer, &needs_comma);
+        try writer.writeAll("\"attachments\":");
+        try writeUploadAttachmentArray(files, writer);
+    }
+    try writer.writeByte('}');
+}
 
 /// Query parameters for executing a webhook: `wait` to receive the created
 /// message in the response, and `thread_id` to post into an existing thread.
@@ -6489,6 +6809,91 @@ pub const CreatePoll = struct {
     }
 };
 
+pub const max_message_content_len = 2000;
+pub const max_message_nonce_len = 25;
+pub const max_message_embeds = 10;
+pub const max_message_stickers = 3;
+
+pub const MessageValidationError = error{
+    ContentTooLong,
+    NonceTooLong,
+    TooManyEmbeds,
+    TooManyStickers,
+    ComponentsV2Exclusive,
+    TooManyFields,
+    TitleTooLong,
+    DescriptionTooLong,
+    FooterTooLong,
+    AuthorNameTooLong,
+    FieldNameTooLong,
+    FieldValueTooLong,
+    EmbedTooLong,
+    TooManyUsers,
+    TooManyRoles,
+    UserParseConflict,
+    RoleParseConflict,
+    TooManyActionRows,
+    TooManyRowComponents,
+    TooManySelectOptions,
+    TooManyCommandOptions,
+    TooManyCommandChoices,
+    CustomIdTooLong,
+    ButtonLabelTooLong,
+    ButtonCustomIdRequired,
+    ButtonUrlRequired,
+    ButtonSkuIdRequired,
+    ButtonFieldConflict,
+    SelectPlaceholderTooLong,
+    SelectOptionLabelTooLong,
+    SelectOptionValueTooLong,
+    SelectOptionDescriptionTooLong,
+    SelectValueRangeInvalid,
+    TextInputLabelTooLong,
+    TextInputPlaceholderTooLong,
+    TextInputValueTooLong,
+    CommandNameInvalid,
+    CommandDescriptionInvalid,
+    OptionNameInvalid,
+    OptionDescriptionInvalid,
+    ChoiceNameTooLong,
+    ChoiceValueTooLong,
+    SectionComponentCountInvalid,
+    MediaGalleryItemCountInvalid,
+    InvalidUtf8,
+};
+
+fn validateMessagePayload(
+    content: ?[]const u8,
+    flags: ?MessageFlags.Bit,
+    embeds: []const Embed,
+    sticker_ids: []const Snowflake,
+    allowed_mentions: ?AllowedMentions,
+    components: []const Interactions.Component,
+    poll: ?CreatePoll,
+    shared_client_theme: ?SharedClientTheme,
+) MessageValidationError!void {
+    if (content) |value| {
+        const len = try Json.codepointLen(value);
+        if (len > max_message_content_len) return error.ContentTooLong;
+    }
+    if (embeds.len > max_message_embeds) return error.TooManyEmbeds;
+    for (embeds) |embed| try embed.validate();
+    if (sticker_ids.len > max_message_stickers) return error.TooManyStickers;
+    if (allowed_mentions) |mentions| try mentions.validate();
+    try Interactions.Component.validateLayout(components);
+
+    if (flags) |bits| {
+        if ((bits & MessageFlags.is_components_v2) != 0) {
+            var has_non_component_body = embeds.len != 0 or
+                sticker_ids.len != 0 or
+                poll != null or
+                shared_client_theme != null;
+            if (content) |value| has_non_component_body = has_non_component_body or value.len != 0;
+            if (has_non_component_body) return error.ComponentsV2Exclusive;
+        }
+    }
+}
+
 pub const CreateMessage = struct {
     content: []const u8 = "",
     nonce: ?[]const u8 = null,
@@ -6570,6 +6975,23 @@ pub const CreateMessage = struct {
         var message = self;
         message.shared_client_theme = shared_client_theme;
         return message;
+    }
+
+    pub fn validate(self: CreateMessage) MessageValidationError!void {
+        try validateMessagePayload(
+            if (self.content.len != 0) self.content else null,
+            self.flags,
+            self.embeds,
+            self.sticker_ids,
+            self.allowed_mentions,
+            self.components,
+            self.poll,
+            self.shared_client_theme,
+        );
+        if (self.nonce) |nonce| {
+            const len = try Json.codepointLen(nonce);
+            if (len > max_message_nonce_len) return error.NonceTooLong;
+        }
     }
 
     pub fn writeJson(self: CreateMessage, writer: anytype) !void {
@@ -6884,6 +7306,19 @@ pub const EditMessage = struct {
         return message;
     }
 
+    pub fn validate(self: EditMessage) MessageValidationError!void {
+        try validateMessagePayload(
+            self.content,
+            self.flags,
+            self.embeds,
+            &.{},
+            self.allowed_mentions,
+            self.components,
+            null,
+            null,
+        );
+    }
+
     pub fn writeJson(self: EditMessage, writer: anytype) !void {
         try writer.writeByte('{');
         var needs_comma = false;
@@ -6984,6 +7419,12 @@ pub const UploadFilePath = struct {
         return file;
     }
 };
+
+pub const EmbedBuilder = Embed;
+pub const AttachmentBuilder = UploadFile;
+pub const AttachmentPathBuilder = UploadFilePath;
+pub const AllowedMentionsBuilder = AllowedMentions;
+pub const PollBuilder = CreatePoll;
 
 pub fn writeCreateMessageJsonWithAttachments(
     payload: CreateMessage,
@@ -7298,6 +7739,24 @@ fn writeUploadAttachmentArray(files: anytype, writer: anytype) !void {
             try Json.writeString(description, writer);
         }
         try writer.writeByte('}');
+    }
+    try writer.writeByte(']');
+}
+
+fn writeCreateGuildRoleArray(roles: []const CreateGuildRole, writer: anytype) !void {
+    try writer.writeByte('[');
+    for (roles, 0..) |role, index| {
+        if (index != 0) try writer.writeByte(',');
+        try role.writeJson(writer);
+    }
+    try writer.writeByte(']');
+}
+
+fn writeCreateGuildChannelArray(channels: []const CreateGuildChannel, writer: anytype) !void {
+    try writer.writeByte('[');
+    for (channels, 0..) |channel, index| {
+        if (index != 0) try writer.writeByte(',');
+        try channel.writeJson(writer);
     }
     try writer.writeByte(']');
 }
@@ -8310,6 +8769,58 @@ test "guild template JSON supports create and edit payloads" {
     try std.testing.expectEqualStrings("{\"description\":\"Updated\"}", edit.written());
 }
 
+test "guild lifecycle and group DM payload JSON" {
+    var guild = std.Io.Writer.Allocating.init(std.testing.allocator);
+    defer guild.deinit();
+
+    const roles = [_]CreateGuildRole{CreateGuildRole.init("mod").withPermissions(Permissions.manage_messages)};
+    const channels = [_]CreateGuildChannel{CreateGuildChannel.init("general").withType(.guild_text)};
+    try CreateGuild.init("zig")
+        .withIcon("data:image/png;base64,abc")
+        .withRoles(&roles)
+        .withChannels(&channels)
+        .withVerificationLevel(1)
+        .writeJson(&guild.writer);
+    try std.testing.expectEqualStrings(
+        "{\"name\":\"zig\",\"icon\":\"data:image/png;base64,abc\",\"verification_level\":1,\"roles\":[{\"name\":\"mod\",\"permissions\":\"8192\"}],\"channels\":[{\"name\":\"general\",\"type\":0}]}",
+        guild.written(),
+    );
+
+    var template = std.Io.Writer.Allocating.init(std.testing.allocator);
+    defer template.deinit();
+    try CreateGuildFromTemplate.init("from-template").withIcon("data:image/png;base64,xyz").writeJson(&template.writer);
+    try std.testing.expectEqualStrings(
+        "{\"name\":\"from-template\",\"icon\":\"data:image/png;base64,xyz\"}",
+        template.written(),
+    );
+
+    var recipient = std.Io.Writer.Allocating.init(std.testing.allocator);
+    defer recipient.deinit();
+    try AddGroupDmRecipient.init("oauth-token").withNick("baris").writeJson(&recipient.writer);
+    try std.testing.expectEqualStrings("{\"access_token\":\"oauth-token\",\"nick\":\"baris\"}", recipient.written());
+}
+
+test "forum thread payload JSON includes first message and tags" {
+    var out = std.Io.Writer.Allocating.init(std.testing.allocator);
+    defer out.deinit();
+
+    const tags = [_]Snowflake{ Snowflake.init(10), Snowflake.init(20) };
+    const embeds = [_]Embed{Embed.init().withTitle("Launch")};
+    try CreateForumThread.init(
+        "release",
+        ForumThreadMessage.init("ship").withEmbeds(&embeds),
+    )
+        .withAutoArchiveDuration(1440)
+        .withRateLimit(5)
+        .withAppliedTags(&tags)
+        .writeJson(&out.writer);
+
+    try std.testing.expectEqualStrings(
+        "{\"name\":\"release\",\"auto_archive_duration\":1440,\"rate_limit_per_user\":5,\"message\":{\"content\":\"ship\",\"embeds\":[{\"title\":\"Launch\"}]},\"applied_tags\":[\"10\",\"20\"]}",
+        out.written(),
+    );
+}
+
 test "guild widget settings JSON supports update and clear channel" {
     var update = std.Io.Writer.Allocating.init(std.testing.allocator);
     defer update.deinit();
@@ -9098,6 +9609,28 @@ test "execute webhook JSON supports message override fields" {
     );
 }
 
+test "execute webhook payload_json includes attachments" {
+    var out = std.Io.Writer.Allocating.init(std.testing.allocator);
+    defer out.deinit();
+
+    const files = [_]UploadFile{
+        UploadFile.init("deploy.txt", "done").withDescription("Release notes"),
+    };
+
+    try writeExecuteWebhookJsonWithAttachments(
+        ExecuteWebhook.init("ship")
+            .withUsername("deploys")
+            .withThreadName("release-thread"),
+        &files,
+        &out.writer,
+    );
+
+    try std.testing.expectEqualStrings(
+        "{\"content\":\"ship\",\"username\":\"deploys\",\"thread_name\":\"release-thread\",\"attachments\":[{\"id\":\"0\",\"filename\":\"deploy.txt\",\"description\":\"Release notes\"}]}",
+        out.written(),
+    );
+}
+
 test "message JSON supports flags for create and edit" {
     var create = std.Io.Writer.Allocating.init(std.testing.allocator);
     defer create.deinit();
@@ -9352,6 +9885,29 @@ test "create message builder helpers compose components poll and tts" {
     );
 }
 
+test "discordjs style type aliases compile to existing builders" {
+    var embed_out = std.Io.Writer.Allocating.init(std.testing.allocator);
+    defer embed_out.deinit();
+    try EmbedBuilder.init().withTitle("Deploy").writeJson(&embed_out.writer);
+    try std.testing.expectEqualStrings("{\"title\":\"Deploy\"}", embed_out.written());
+
+    const attachment = AttachmentBuilder.init("hello.txt", "hi").withDescription("Greeting");
+    try std.testing.expectEqualStrings("hello.txt", attachment.filename);
+
+    const attachment_path = AttachmentPathBuilder.init("hello.txt", "fixtures/hello.txt");
+    try std.testing.expectEqualStrings("fixtures/hello.txt", attachment_path.path);
+
+    var mentions_out = std.Io.Writer.Allocating.init(std.testing.allocator);
+    defer mentions_out.deinit();
+    try AllowedMentionsBuilder.none().withUsers(&.{Snowflake.init(10)}).writeJson(&mentions_out.writer);
+    try std.testing.expectEqualStrings("{\"parse\":[],\"users\":[\"10\"]}", mentions_out.written());
+
+    var poll_out = std.Io.Writer.Allocating.init(std.testing.allocator);
+    defer poll_out.deinit();
+    const answers = [_]PollAnswer{ PollAnswer.text("yes"), PollAnswer.text("no") };
+    try PollBuilder.init("Ship?", &answers).writeJson(&poll_out.writer);
+    try std.testing.expect(std.mem.indexOf(u8, poll_out.written(), "\"question\":{\"text\":\"Ship?\"}") != null);
+}
 test "create message payload_json includes upload attachments" {
     var out = std.Io.Writer.Allocating.init(std.testing.allocator);
     defer out.deinit();
@@ -9482,6 +10038,50 @@ test "edit message JSON supports content and embeds" {
         "{\"content\":\"updated\",\"embeds\":[{\"title\":\"edited\"}],\"allowed_mentions\":{\"parse\":[]}}",
         out.written(),
     );
+}
+
+test "message payload validate enforces content embed sticker mention and component limits" {
+    const long_content = "x" ** (max_message_content_len + 1);
+    try std.testing.expectError(error.ContentTooLong, CreateMessage.init(long_content).validate());
+
+    const too_many_embeds = [_]Embed{Embed.init()} ** (max_message_embeds + 1);
+    try std.testing.expectError(error.TooManyEmbeds, CreateMessage.empty().withEmbeds(&too_many_embeds).validate());
+
+    const too_many_stickers = [_]Snowflake{Snowflake.init(1)} ** (max_message_stickers + 1);
+    try std.testing.expectError(error.TooManyStickers, CreateMessage.empty().withStickers(&too_many_stickers).validate());
+
+    const users = [_]Snowflake{Snowflake.init(2)} ** (AllowedMentions.max_users + 1);
+    try std.testing.expectError(
+        error.TooManyUsers,
+        CreateMessage.init("hi").withAllowedMentions(AllowedMentions.none().withUsers(&users)).validate(),
+    );
+
+    const row_children = [_]Interactions.Component{.{ .button = Interactions.Button.primary("id", "ok") }} ** (Interactions.max_row_components + 1);
+    const rows = [_]Interactions.Component{Interactions.Component.actionRow(&row_children)};
+    try std.testing.expectError(error.TooManyRowComponents, CreateMessage.empty().withComponents(&rows).validate());
+}
+
+test "message payload validate handles components v2 exclusivity and nonce length" {
+    const text = [_]Interactions.TextDisplay{Interactions.TextDisplay.init("body")};
+    const components = [_]Interactions.Component{.{ .section = Interactions.Section.withButton(&text, Interactions.Button.primary("id", "ok")) }};
+
+    try CreateMessage.empty()
+        .withFlags(MessageFlags.is_components_v2)
+        .withComponents(&components)
+        .validate();
+
+    try std.testing.expectError(
+        error.ComponentsV2Exclusive,
+        CreateMessage.init("not allowed")
+            .withFlags(MessageFlags.is_components_v2)
+            .withComponents(&components)
+            .validate(),
+    );
+
+    const long_nonce = "n" ** (max_message_nonce_len + 1);
+    try std.testing.expectError(error.NonceTooLong, CreateMessage.init("hi").withNonce(long_nonce, true).validate());
+
+    try std.testing.expectError(error.ContentTooLong, EditMessage.init().withContent("x" ** (max_message_content_len + 1)).validate());
 }
 
 test "embed validate rejects field overflow at the limit boundary" {

@@ -537,6 +537,12 @@ pub const Client = struct {
         return self.requestJson(route, payload);
     }
 
+    pub fn createGuild(self: *Client, payload: Types.CreateGuild) !Response {
+        const route = try Routes.createGuild(self.allocator);
+        defer route.deinit(self.allocator);
+        return self.requestJson(route, payload);
+    }
+
     pub fn getGuild(self: *Client, guild_id: Snowflake) !Response {
         const route = try Routes.guild(self.allocator, guild_id);
         defer route.deinit(self.allocator);
@@ -553,6 +559,12 @@ pub const Client = struct {
         const route = try Routes.editGuild(self.allocator, guild_id);
         defer route.deinit(self.allocator);
         return self.requestJson(route, payload);
+    }
+
+    pub fn deleteGuild(self: *Client, guild_id: Snowflake) !Response {
+        const route = try Routes.deleteGuild(self.allocator, guild_id);
+        defer route.deinit(self.allocator);
+        return self.request(route, null, null);
     }
 
     pub fn getGuildPreview(self: *Client, guild_id: Snowflake) !Response {
@@ -604,6 +616,12 @@ pub const Client = struct {
         const route = try Routes.guildTemplate(self.allocator, code);
         defer route.deinit(self.allocator);
         return self.request(route, null, null);
+    }
+
+    pub fn createGuildFromTemplate(self: *Client, code: []const u8, payload: Types.CreateGuildFromTemplate) !Response {
+        const route = try Routes.createGuildFromTemplate(self.allocator, code);
+        defer route.deinit(self.allocator);
+        return self.requestJson(route, payload);
     }
 
     pub fn listGuildTemplates(self: *Client, guild_id: Snowflake) !Response {
@@ -1148,6 +1166,20 @@ pub const Client = struct {
         return self.requestJson(route, payload);
     }
 
+    pub fn createForumThread(self: *Client, channel_id: Snowflake, payload: Types.CreateForumThread) !Response {
+        const route = try Routes.createThread(self.allocator, channel_id);
+        defer route.deinit(self.allocator);
+        return self.requestJson(route, payload);
+    }
+
+    pub fn startThreadInForum(self: *Client, channel_id: Snowflake, payload: Types.CreateForumThread) !Response {
+        return self.createForumThread(channel_id, payload);
+    }
+
+    pub fn startThreadInMedia(self: *Client, channel_id: Snowflake, payload: Types.CreateForumThread) !Response {
+        return self.createForumThread(channel_id, payload);
+    }
+
     pub fn listActiveGuildThreads(self: *Client, guild_id: Snowflake) !Response {
         const route = try Routes.activeGuildThreads(self.allocator, guild_id);
         defer route.deinit(self.allocator);
@@ -1265,6 +1297,23 @@ pub const Client = struct {
         return self.requestJson(route, payload);
     }
 
+    pub fn addGroupDmRecipient(
+        self: *Client,
+        channel_id: Snowflake,
+        user_id: Snowflake,
+        payload: Types.AddGroupDmRecipient,
+    ) !Response {
+        const route = try Routes.addGroupDmRecipient(self.allocator, channel_id, user_id);
+        defer route.deinit(self.allocator);
+        return self.requestJson(route, payload);
+    }
+
+    pub fn removeGroupDmRecipient(self: *Client, channel_id: Snowflake, user_id: Snowflake) !Response {
+        const route = try Routes.removeGroupDmRecipient(self.allocator, channel_id, user_id);
+        defer route.deinit(self.allocator);
+        return self.request(route, null, null);
+    }
+
     pub fn listChannelInvites(self: *Client, channel_id: Snowflake) !Response {
         const route = try Routes.channelInvites(self.allocator, channel_id);
         defer route.deinit(self.allocator);
@@ -1357,6 +1406,31 @@ pub const Client = struct {
         const route = try Routes.executeWebhookWithOptions(self.allocator, webhook_id, webhook_token, options);
         defer route.deinit(self.allocator);
         return self.requestJsonWithToken(route, "", payload);
+    }
+
+    pub fn executeWebhookWithFiles(
+        self: *Client,
+        webhook_id: Snowflake,
+        webhook_token: []const u8,
+        payload: Types.ExecuteWebhook,
+        files: []const Types.UploadFile,
+    ) !Response {
+        const route = try Routes.executeWebhook(self.allocator, webhook_id, webhook_token);
+        defer route.deinit(self.allocator);
+        return self.requestWebhookMultipartWithToken(route, "", payload, files);
+    }
+
+    pub fn executeWebhookWithOptionsAndFiles(
+        self: *Client,
+        webhook_id: Snowflake,
+        webhook_token: []const u8,
+        options: Types.ExecuteWebhookQuery,
+        payload: Types.ExecuteWebhook,
+        files: []const Types.UploadFile,
+    ) !Response {
+        const route = try Routes.executeWebhookWithOptions(self.allocator, webhook_id, webhook_token, options);
+        defer route.deinit(self.allocator);
+        return self.requestWebhookMultipartWithToken(route, "", payload, files);
     }
 
     pub fn getWebhookMessage(
@@ -1855,6 +1929,23 @@ pub const Client = struct {
         return self.request(route, body.written(), content_type);
     }
 
+    fn requestWebhookMultipartWithToken(
+        self: *Client,
+        route: Routes.Route,
+        token: []const u8,
+        payload: Types.ExecuteWebhook,
+        files: []const Types.UploadFile,
+    ) !Response {
+        const boundary = "discord-zig-boundary";
+        var body = std.Io.Writer.Allocating.init(self.allocator);
+        defer body.deinit();
+
+        try writeExecuteWebhookMultipart(boundary, payload, files, &body.writer);
+
+        const content_type = "multipart/form-data; boundary=" ++ boundary;
+        return self.requestWithToken(route, token, body.written(), content_type);
+    }
+
     fn requestMultipartFilePaths(
         self: *Client,
         route: Routes.Route,
@@ -2051,6 +2142,31 @@ pub fn writeMessageMultipart(
     try writer.writeAll("Content-Disposition: form-data; name=\"payload_json\"\r\n");
     try writer.writeAll("Content-Type: application/json\r\n\r\n");
     try Types.writeCreateMessageJsonWithAttachments(payload, files, writer);
+    try writer.writeAll("\r\n");
+
+    for (files, 0..) |file, index| {
+        try writer.print("--{s}\r\n", .{boundary});
+        try writer.print("Content-Disposition: form-data; name=\"files[{d}]\"; filename=\"", .{index});
+        try writeMultipartQuoted(file.filename, writer);
+        try writer.writeAll("\"\r\n");
+        try writer.print("Content-Type: {s}\r\n\r\n", .{file.content_type});
+        try writer.writeAll(file.content);
+        try writer.writeAll("\r\n");
+    }
+
+    try writer.print("--{s}--\r\n", .{boundary});
+}
+
+pub fn writeExecuteWebhookMultipart(
+    boundary: []const u8,
+    payload: Types.ExecuteWebhook,
+    files: []const Types.UploadFile,
+    writer: anytype,
+) !void {
+    try writer.print("--{s}\r\n", .{boundary});
+    try writer.writeAll("Content-Disposition: form-data; name=\"payload_json\"\r\n");
+    try writer.writeAll("Content-Type: application/json\r\n\r\n");
+    try Types.writeExecuteWebhookJsonWithAttachments(payload, files, writer);
     try writer.writeAll("\r\n");
 
     for (files, 0..) |file, index| {
@@ -2534,6 +2650,75 @@ test "REST thread creation helpers use expected routes and payloads" {
     );
 }
 
+test "REST guild lifecycle and group DM helpers use expected routes and payloads" {
+    var memory = MemoryTransport.init(std.testing.allocator, .{
+        .status = 200,
+        .body = "{}",
+    });
+    defer memory.deinit();
+    var client = Client.init(std.testing.allocator, "Bot test", memory.transport());
+    defer client.deinit();
+
+    _ = try client.createGuild(Types.CreateGuild.init("zig"));
+    try std.testing.expectEqual(.POST, memory.last_request.?.method);
+    try std.testing.expectEqualStrings("https://discord.com/api/v10/guilds", memory.last_request.?.url);
+    try std.testing.expectEqualStrings("{\"name\":\"zig\"}", memory.last_request.?.body.?);
+
+    _ = try client.createGuildFromTemplate("starter pack", Types.CreateGuildFromTemplate.init("templated"));
+    try std.testing.expectEqual(.POST, memory.last_request.?.method);
+    try std.testing.expectEqualStrings(
+        "https://discord.com/api/v10/guilds/templates/starter%20pack",
+        memory.last_request.?.url,
+    );
+    try std.testing.expectEqualStrings("{\"name\":\"templated\"}", memory.last_request.?.body.?);
+
+    _ = try client.deleteGuild(Snowflake.init(99));
+    try std.testing.expectEqual(.DELETE, memory.last_request.?.method);
+    try std.testing.expectEqualStrings("https://discord.com/api/v10/guilds/99", memory.last_request.?.url);
+
+    _ = try client.addGroupDmRecipient(
+        Snowflake.init(10),
+        Snowflake.init(20),
+        Types.AddGroupDmRecipient.init("oauth").withNick("zig"),
+    );
+    try std.testing.expectEqual(.PUT, memory.last_request.?.method);
+    try std.testing.expectEqualStrings(
+        "https://discord.com/api/v10/channels/10/recipients/20",
+        memory.last_request.?.url,
+    );
+    try std.testing.expectEqualStrings("{\"access_token\":\"oauth\",\"nick\":\"zig\"}", memory.last_request.?.body.?);
+
+    _ = try client.removeGroupDmRecipient(Snowflake.init(10), Snowflake.init(20));
+    try std.testing.expectEqual(.DELETE, memory.last_request.?.method);
+    try std.testing.expectEqualStrings(
+        "https://discord.com/api/v10/channels/10/recipients/20",
+        memory.last_request.?.url,
+    );
+}
+
+test "REST forum thread helper serializes initial message" {
+    var memory = MemoryTransport.init(std.testing.allocator, .{
+        .status = 200,
+        .body = "{}",
+    });
+    defer memory.deinit();
+    var client = Client.init(std.testing.allocator, "Bot test", memory.transport());
+    defer client.deinit();
+
+    const tags = [_]Snowflake{Snowflake.init(55)};
+    _ = try client.createForumThread(
+        Snowflake.init(10),
+        Types.CreateForumThread.init("help", Types.ForumThreadMessage.init("first")).withAppliedTags(&tags),
+    );
+
+    try std.testing.expectEqual(.POST, memory.last_request.?.method);
+    try std.testing.expectEqualStrings("https://discord.com/api/v10/channels/10/threads", memory.last_request.?.url);
+    try std.testing.expectEqualStrings(
+        "{\"name\":\"help\",\"message\":{\"content\":\"first\"},\"applied_tags\":[\"55\"]}",
+        memory.last_request.?.body.?,
+    );
+}
+
 test "REST thread member helpers use expected routes" {
     var memory = MemoryTransport.init(std.testing.allocator, .{
         .status = 200,
@@ -2828,6 +3013,28 @@ test "REST webhook helpers use expected routes and payloads" {
         "{\"content\":\"deploy complete\"}",
         memory.last_request.?.body.?,
     );
+
+    const webhook_files = [_]Types.UploadFile{
+        Types.UploadFile.init("deploy.txt", "ok").withContentType("text/plain"),
+    };
+    _ = try client.executeWebhookWithFiles(
+        Snowflake.init(30),
+        "tok en",
+        Types.ExecuteWebhook.init("deploy with file"),
+        &webhook_files,
+    );
+    try std.testing.expectEqual(.POST, memory.last_request.?.method);
+    try std.testing.expectEqualStrings("", memory.last_request.?.token);
+    try std.testing.expectEqualStrings(
+        "https://discord.com/api/v10/webhooks/30/tok%20en",
+        memory.last_request.?.url,
+    );
+    try std.testing.expectEqualStrings(
+        "multipart/form-data; boundary=discord-zig-boundary",
+        memory.last_request.?.content_type.?,
+    );
+    try std.testing.expect(std.mem.indexOf(u8, memory.last_request.?.body.?, "\"content\":\"deploy with file\"") != null);
+    try std.testing.expect(std.mem.indexOf(u8, memory.last_request.?.body.?, "name=\"files[0]\"; filename=\"deploy.txt\"") != null);
 
     _ = try client.getWebhookMessage(Snowflake.init(30), "tok en", Snowflake.init(40));
     try std.testing.expectEqual(.GET, memory.last_request.?.method);
@@ -4590,6 +4797,42 @@ test "REST createMessageWithFiles sends multipart body" {
         memory.last_request.?.content_type.?,
     );
     try std.testing.expect(std.mem.indexOf(u8, memory.last_request.?.body.?, "name=\"files[0]\"; filename=\"hello.txt\"") != null);
+}
+
+test "REST executeWebhookWithFiles sends multipart body" {
+    var memory = MemoryTransport.init(std.testing.allocator, .{
+        .status = 200,
+        .body = "{}",
+    });
+    defer memory.deinit();
+
+    var client = Client.init(std.testing.allocator, "Bot test", memory.transport());
+    defer client.deinit();
+
+    const files = [_]Types.UploadFile{
+        Types.UploadFile.init("deploy.txt", "ship").withContentType("text/plain"),
+    };
+
+    _ = try client.executeWebhookWithOptionsAndFiles(
+        Snowflake.init(123),
+        "tok en",
+        .{ .wait = true, .thread_id = Snowflake.init(555) },
+        Types.ExecuteWebhook.init("with file"),
+        &files,
+    );
+
+    try std.testing.expectEqual(.POST, memory.last_request.?.method);
+    try std.testing.expectEqualStrings(
+        "https://discord.com/api/v10/webhooks/123/tok%20en?wait=true&thread_id=555",
+        memory.last_request.?.url,
+    );
+    try std.testing.expectEqualStrings("", memory.last_request.?.token);
+    try std.testing.expectEqualStrings(
+        "multipart/form-data; boundary=discord-zig-boundary",
+        memory.last_request.?.content_type.?,
+    );
+    try std.testing.expect(std.mem.indexOf(u8, memory.last_request.?.body.?, "\"attachments\":[{\"id\":\"0\",\"filename\":\"deploy.txt\"}]") != null);
+    try std.testing.expect(std.mem.indexOf(u8, memory.last_request.?.body.?, "name=\"files[0]\"; filename=\"deploy.txt\"") != null);
 }
 
 test "REST createMessageWithFilePaths streams multipart body" {

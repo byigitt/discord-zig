@@ -103,6 +103,9 @@ pub const EventName = enum {
     ENTITLEMENT_CREATE,
     ENTITLEMENT_UPDATE,
     ENTITLEMENT_DELETE,
+    SUBSCRIPTION_CREATE,
+    SUBSCRIPTION_UPDATE,
+    SUBSCRIPTION_DELETE,
     GUILD_CREATE,
     GUILD_UPDATE,
     GUILD_DELETE,
@@ -154,6 +157,7 @@ pub const EventName = enum {
     THREAD_LIST_SYNC,
     THREAD_MEMBER_UPDATE,
     THREAD_MEMBERS_UPDATE,
+    RATE_LIMITED,
     unknown,
 
     pub fn parse(value: []const u8) EventName {
