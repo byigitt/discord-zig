@@ -151,6 +151,25 @@ pub fn applicationIconUrlFor(allocator: std.mem.Allocator, application: Types.Ap
     return try applicationIconUrl(allocator, application.id, icon_hash, options);
 }
 
+pub fn applicationCoverUrl(
+    allocator: std.mem.Allocator,
+    application_id: Snowflake,
+    cover_hash: []const u8,
+    options: ImageOptions,
+) ![]u8 {
+    return assetUrl(
+        allocator,
+        "/app-icons/{d}/{s}.{s}",
+        .{ application_id.value, cover_hash, resolveFormat(cover_hash, options).extension() },
+        options,
+    );
+}
+
+pub fn applicationCoverUrlFor(allocator: std.mem.Allocator, application: Types.Application, options: ImageOptions) !?[]u8 {
+    const cover_hash = application.cover_image orelse return null;
+    return try applicationCoverUrl(allocator, application.id, cover_hash, options);
+}
+
 pub fn guildIconUrl(
     allocator: std.mem.Allocator,
     guild_id: Snowflake,
@@ -187,6 +206,44 @@ pub fn guildBannerUrl(
 pub fn guildBannerUrlFor(allocator: std.mem.Allocator, guild: Types.Guild, options: ImageOptions) !?[]u8 {
     const banner_hash = guild.banner orelse return null;
     return try guildBannerUrl(allocator, guild.id, banner_hash, options);
+}
+
+pub fn guildSplashUrl(
+    allocator: std.mem.Allocator,
+    guild_id: Snowflake,
+    splash_hash: []const u8,
+    options: ImageOptions,
+) ![]u8 {
+    return assetUrl(
+        allocator,
+        "/splashes/{d}/{s}.{s}",
+        .{ guild_id.value, splash_hash, resolveFormat(splash_hash, options).extension() },
+        options,
+    );
+}
+
+pub fn guildSplashUrlFor(allocator: std.mem.Allocator, guild: Types.Guild, options: ImageOptions) !?[]u8 {
+    const splash_hash = guild.splash orelse return null;
+    return try guildSplashUrl(allocator, guild.id, splash_hash, options);
+}
+
+pub fn guildDiscoverySplashUrl(
+    allocator: std.mem.Allocator,
+    guild_id: Snowflake,
+    splash_hash: []const u8,
+    options: ImageOptions,
+) ![]u8 {
+    return assetUrl(
+        allocator,
+        "/discovery-splashes/{d}/{s}.{s}",
+        .{ guild_id.value, splash_hash, resolveFormat(splash_hash, options).extension() },
+        options,
+    );
+}
+
+pub fn guildDiscoverySplashUrlFor(allocator: std.mem.Allocator, guild: Types.Guild, options: ImageOptions) !?[]u8 {
+    const splash_hash = guild.discovery_splash orelse return null;
+    return try guildDiscoverySplashUrl(allocator, guild.id, splash_hash, options);
 }
 
 pub fn guildMemberAvatarUrl(
@@ -232,6 +289,25 @@ pub fn roleIconUrl(
 pub fn roleIconUrlFor(allocator: std.mem.Allocator, role: Types.Role, options: ImageOptions) !?[]u8 {
     const icon_hash = role.icon orelse return null;
     return try roleIconUrl(allocator, role.id, icon_hash, options);
+}
+
+pub fn teamIconUrl(
+    allocator: std.mem.Allocator,
+    team_id: Snowflake,
+    icon_hash: []const u8,
+    options: ImageOptions,
+) ![]u8 {
+    return assetUrl(
+        allocator,
+        "/team-icons/{d}/{s}.{s}",
+        .{ team_id.value, icon_hash, resolveFormat(icon_hash, options).extension() },
+        options,
+    );
+}
+
+pub fn teamIconUrlFor(allocator: std.mem.Allocator, team: Types.Team, options: ImageOptions) !?[]u8 {
+    const icon_hash = team.icon orelse return null;
+    return try teamIconUrl(allocator, team.id, icon_hash, options);
 }
 
 pub fn emojiUrl(
@@ -292,6 +368,14 @@ test "asset urls use expected cdn paths formats and sizes" {
     defer std.testing.allocator.free(banner);
     try std.testing.expectEqualStrings("https://cdn.discordapp.com/banners/20/banner.png?size=1024", banner);
 
+    const splash = try guildSplashUrl(std.testing.allocator, Snowflake.init(20), "splash", .{});
+    defer std.testing.allocator.free(splash);
+    try std.testing.expectEqualStrings("https://cdn.discordapp.com/splashes/20/splash.png", splash);
+
+    const discovery_splash = try guildDiscoverySplashUrl(std.testing.allocator, Snowflake.init(20), "a_discovery", .{});
+    defer std.testing.allocator.free(discovery_splash);
+    try std.testing.expectEqualStrings("https://cdn.discordapp.com/discovery-splashes/20/a_discovery.gif", discovery_splash);
+
     const user_banner = try userBannerUrl(std.testing.allocator, Snowflake.init(10), "a_banner", .{});
     defer std.testing.allocator.free(user_banner);
     try std.testing.expectEqualStrings("https://cdn.discordapp.com/banners/10/a_banner.gif", user_banner);
@@ -300,6 +384,10 @@ test "asset urls use expected cdn paths formats and sizes" {
     defer std.testing.allocator.free(app_icon);
     try std.testing.expectEqualStrings("https://cdn.discordapp.com/app-icons/30/app_icon.png?size=512", app_icon);
 
+    const app_cover = try applicationCoverUrl(std.testing.allocator, Snowflake.init(30), "cover", .{});
+    defer std.testing.allocator.free(app_cover);
+    try std.testing.expectEqualStrings("https://cdn.discordapp.com/app-icons/30/cover.png", app_cover);
+
     const member_avatar = try guildMemberAvatarUrl(std.testing.allocator, Snowflake.init(40), Snowflake.init(50), "a_member", .{});
     defer std.testing.allocator.free(member_avatar);
     try std.testing.expectEqualStrings("https://cdn.discordapp.com/guilds/40/users/50/avatars/a_member.gif", member_avatar);
@@ -307,6 +395,10 @@ test "asset urls use expected cdn paths formats and sizes" {
     const role_icon = try roleIconUrl(std.testing.allocator, Snowflake.init(60), "role_icon", .{ .format = .webp });
     defer std.testing.allocator.free(role_icon);
     try std.testing.expectEqualStrings("https://cdn.discordapp.com/role-icons/60/role_icon.webp", role_icon);
+
+    const team_icon = try teamIconUrl(std.testing.allocator, Snowflake.init(80), "a_team", .{});
+    defer std.testing.allocator.free(team_icon);
+    try std.testing.expectEqualStrings("https://cdn.discordapp.com/team-icons/80/a_team.gif", team_icon);
 }
 
 test "asset urls support default avatars emoji stickers and validation" {
@@ -365,19 +457,43 @@ test "asset urls support user and guild model helpers" {
     defer std.testing.allocator.free(user_banner);
     try std.testing.expectEqualStrings("https://cdn.discordapp.com/banners/10/banner.png", user_banner);
 
-    const guild = Types.Guild{ .id = Snowflake.init(20), .name = "guild", .icon = "icon", .banner = "a_banner" };
+    const guild = Types.Guild{
+        .id = Snowflake.init(20),
+        .name = "guild",
+        .icon = "icon",
+        .splash = "splash",
+        .discovery_splash = "discovery",
+        .banner = "a_banner",
+    };
     const icon = (try guildIconUrlFor(std.testing.allocator, guild, .{ .format = .webp })).?;
     defer std.testing.allocator.free(icon);
     try std.testing.expectEqualStrings("https://cdn.discordapp.com/icons/20/icon.webp", icon);
+
+    const guild_splash = (try guildSplashUrlFor(std.testing.allocator, guild, .{})).?;
+    defer std.testing.allocator.free(guild_splash);
+    try std.testing.expectEqualStrings("https://cdn.discordapp.com/splashes/20/splash.png", guild_splash);
+
+    const discovery_splash = (try guildDiscoverySplashUrlFor(std.testing.allocator, guild, .{})).?;
+    defer std.testing.allocator.free(discovery_splash);
+    try std.testing.expectEqualStrings("https://cdn.discordapp.com/discovery-splashes/20/discovery.png", discovery_splash);
 
     const guild_banner = (try guildBannerUrlFor(std.testing.allocator, guild, .{})).?;
     defer std.testing.allocator.free(guild_banner);
     try std.testing.expectEqualStrings("https://cdn.discordapp.com/banners/20/a_banner.gif", guild_banner);
 
-    const application = Types.Application{ .id = Snowflake.init(50), .name = "app", .icon = "app_icon" };
+    const application = Types.Application{
+        .id = Snowflake.init(50),
+        .name = "app",
+        .icon = "app_icon",
+        .cover_image = "cover",
+    };
     const app_icon = (try applicationIconUrlFor(std.testing.allocator, application, .{ .size = 128 })).?;
     defer std.testing.allocator.free(app_icon);
     try std.testing.expectEqualStrings("https://cdn.discordapp.com/app-icons/50/app_icon.png?size=128", app_icon);
+
+    const app_cover = (try applicationCoverUrlFor(std.testing.allocator, application, .{})).?;
+    defer std.testing.allocator.free(app_cover);
+    try std.testing.expectEqualStrings("https://cdn.discordapp.com/app-icons/50/cover.png", app_cover);
 
     const member = Types.GuildMember{
         .user = .{ .id = Snowflake.init(60), .username = "member" },
@@ -392,11 +508,25 @@ test "asset urls support user and guild model helpers" {
     defer std.testing.allocator.free(role_icon);
     try std.testing.expectEqualStrings("https://cdn.discordapp.com/role-icons/70/a_role.gif", role_icon);
 
+    const team = Types.Team{
+        .id = Snowflake.init(75),
+        .name = "team",
+        .icon = "team_icon",
+        .owner_user_id = Snowflake.init(10),
+    };
+    const team_icon = (try teamIconUrlFor(std.testing.allocator, team, .{})).?;
+    defer std.testing.allocator.free(team_icon);
+    try std.testing.expectEqualStrings("https://cdn.discordapp.com/team-icons/75/team_icon.png", team_icon);
+
     try std.testing.expect(try userAvatarUrlFor(std.testing.allocator, .{ .id = Snowflake.init(30), .username = "plain" }, .{}) == null);
     try std.testing.expect(try guildIconUrlFor(std.testing.allocator, .{ .id = Snowflake.init(40), .name = "plain" }, .{}) == null);
+    try std.testing.expect(try guildSplashUrlFor(std.testing.allocator, .{ .id = Snowflake.init(41), .name = "plain" }, .{}) == null);
+    try std.testing.expect(try guildDiscoverySplashUrlFor(std.testing.allocator, .{ .id = Snowflake.init(42), .name = "plain" }, .{}) == null);
     try std.testing.expect(try applicationIconUrlFor(std.testing.allocator, .{ .id = Snowflake.init(80), .name = "plain" }, .{}) == null);
+    try std.testing.expect(try applicationCoverUrlFor(std.testing.allocator, .{ .id = Snowflake.init(81), .name = "plain" }, .{}) == null);
     try std.testing.expect(try guildMemberAvatarUrlFor(std.testing.allocator, Snowflake.init(20), .{}, .{}) == null);
     try std.testing.expect(try roleIconUrlFor(std.testing.allocator, .{ .id = Snowflake.init(90), .name = "plain" }, .{}) == null);
+    try std.testing.expect(try teamIconUrlFor(std.testing.allocator, .{ .id = Snowflake.init(91), .name = "plain", .owner_user_id = Snowflake.init(1) }, .{}) == null);
 }
 
 test "asset format and size validation helpers" {

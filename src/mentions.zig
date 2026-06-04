@@ -87,6 +87,10 @@ pub fn nicknameMention(allocator: std.mem.Allocator, user_id: Snowflake) ![]u8 {
     return std.fmt.allocPrint(allocator, "<@!{d}>", .{user_id.value});
 }
 
+pub fn memberNicknameMention(allocator: std.mem.Allocator, user_id: Snowflake) ![]u8 {
+    return nicknameMention(allocator, user_id);
+}
+
 pub fn roleMention(allocator: std.mem.Allocator, role_id: Snowflake) ![]u8 {
     return std.fmt.allocPrint(allocator, "<@&{d}>", .{role_id.value});
 }
@@ -278,6 +282,10 @@ test "mention formatters build Discord mention strings" {
     const nickname_text = try nicknameMention(std.testing.allocator, Snowflake.init(12));
     defer std.testing.allocator.free(nickname_text);
     try std.testing.expectEqualStrings("<@!12>", nickname_text);
+
+    const member_nick_text = try memberNicknameMention(std.testing.allocator, Snowflake.init(13));
+    defer std.testing.allocator.free(member_nick_text);
+    try std.testing.expectEqualStrings("<@!13>", member_nick_text);
 
     const role_text = try roleMention(std.testing.allocator, Snowflake.init(20));
     defer std.testing.allocator.free(role_text);

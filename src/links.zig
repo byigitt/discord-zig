@@ -12,6 +12,11 @@ pub const ChannelLink = struct {
     channel_id: Snowflake,
 };
 
+pub const WebhookLink = struct {
+    webhook_id: Snowflake,
+    webhook_token: []const u8,
+};
+
 pub const ApplicationIntegrationType = enum(u8) {
     guild_install = 0,
     user_install = 1,
@@ -76,6 +81,28 @@ pub fn inviteLink(allocator: std.mem.Allocator, code: []const u8) ![]u8 {
 
 pub fn inviteUrl(allocator: std.mem.Allocator, code: []const u8) ![]u8 {
     return inviteLink(allocator, code);
+}
+
+pub fn guildTemplateLink(allocator: std.mem.Allocator, code: []const u8) ![]u8 {
+    if (code.len == 0) return error.InvalidTemplateCode;
+    return std.fmt.allocPrint(allocator, "https://discord.new/{s}", .{code});
+}
+
+pub fn guildTemplateUrl(allocator: std.mem.Allocator, code: []const u8) ![]u8 {
+    return guildTemplateLink(allocator, code);
+}
+
+pub fn webhookLink(allocator: std.mem.Allocator, link: WebhookLink) ![]u8 {
+    if (link.webhook_token.len == 0) return error.InvalidWebhookToken;
+    return std.fmt.allocPrint(
+        allocator,
+        "https://discord.com/api/webhooks/{d}/{s}",
+        .{ link.webhook_id.value, link.webhook_token },
+    );
+}
+
+pub fn webhookUrl(allocator: std.mem.Allocator, webhook_id: Snowflake, webhook_token: []const u8) ![]u8 {
+    return webhookLink(allocator, .{ .webhook_id = webhook_id, .webhook_token = webhook_token });
 }
 
 pub fn authorizationUrl(allocator: std.mem.Allocator, options: AuthorizationUrlOptions) ![]u8 {
@@ -163,6 +190,21 @@ pub fn parseInviteCode(value: []const u8) ![]const u8 {
     var parts = std.mem.splitScalar(u8, path, '/');
     if (!eqlNext(&parts, "invite")) return error.InvalidDiscordLink;
     return firstPathSegment(parts.next() orelse return error.InvalidDiscordLink);
+}
+
+pub fn parseWebhookLink(value: []const u8) !WebhookLink {
+    const path = try discordPath(value);
+    var parts = std.mem.splitScalar(u8, path, '/');
+    if (!eqlNext(&parts, "api")) return error.InvalidDiscordLink;
+    if (!eqlNext(&parts, "webhooks")) return error.InvalidDiscordLink;
+    const webhook_id = try Snowflake.parse(parts.next() orelse return error.InvalidDiscordLink);
+    const webhook_token = stripSuffix(parts.next() orelse return error.InvalidDiscordLink);
+    if (webhook_token.len == 0 or parts.next() != null) return error.InvalidDiscordLink;
+    return .{ .webhook_id = webhook_id, .webhook_token = webhook_token };
+}
+
+pub fn parseWebhookUrl(value: []const u8) !WebhookLink {
+    return parseWebhookLink(value);
 }
 
 fn discordPath(value: []const u8) ![]const u8 {
@@ -266,7 +308,18 @@ test "build message channel and invite links" {
     const invite_alias = try inviteUrl(std.testing.allocator, "xyz");
     defer std.testing.allocator.free(invite_alias);
     try std.testing.expectEqualStrings("https://discord.gg/xyz", invite_alias);
+
+    const template = try guildTemplateLink(std.testing.allocator, "starter");
+    defer std.testing.allocator.free(template);
+    try std.testing.expectEqualStrings("https://discord.new/starter", template);
+
+    const webhook = try webhookUrl(std.testing.allocator, Snowflake.init(99), "tok_en");
+    defer std.testing.allocator.free(webhook);
+    try std.testing.expectEqualStrings("https://discord.com/api/webhooks/99/tok_en", webhook);
+
     try std.testing.expectError(error.InvalidInviteCode, inviteLink(std.testing.allocator, ""));
+    try std.testing.expectError(error.InvalidTemplateCode, guildTemplateLink(std.testing.allocator, ""));
+    try std.testing.expectError(error.InvalidWebhookToken, webhookUrl(std.testing.allocator, Snowflake.init(99), ""));
 }
 
 test "parse channel links" {
@@ -278,6 +331,10 @@ test "parse channel links" {
 test "parse invite codes from supported links" {
     try std.testing.expectEqualStrings("abc123", try parseInviteCode("https://discord.gg/abc123"));
     try std.testing.expectEqualStrings("xyz", try parseInviteCode("discord.com/invite/xyz?source=bot"));
+
+    const webhook = try parseWebhookLink("https://discord.com/api/webhooks/42/tok_en?wait=true");
+    try std.testing.expectEqual(@as(u64, 42), webhook.webhook_id.value);
+    try std.testing.expectEqualStrings("tok_en", webhook.webhook_token);
 }
 
 test "authorization URL builds bot invite parameters" {

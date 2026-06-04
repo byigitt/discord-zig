@@ -17,6 +17,15 @@ pub const HeadingLevel = enum(u8) {
     h2 = 2,
     h3 = 3,
 };
+pub const TimestampStyle = enum(u8) {
+    short_time = 't',
+    long_time = 'T',
+    short_date = 'd',
+    long_date = 'D',
+    short_datetime = 'f',
+    long_datetime = 'F',
+    relative = 'R',
+};
 
 pub fn bold(allocator: std.mem.Allocator, content: []const u8) ![]u8 {
     return std.fmt.allocPrint(allocator, "**{s}**", .{content});
@@ -72,6 +81,10 @@ pub fn hyperlink(allocator: std.mem.Allocator, label: []const u8, url: []const u
 pub fn hyperlinkTitled(allocator: std.mem.Allocator, label: []const u8, url: []const u8, title: []const u8) ![]u8 {
     return std.fmt.allocPrint(allocator, "[{s}]({s} \"{s}\")", .{ label, url, title });
 }
+/// Wraps a URL in angle brackets so Discord does not render an embed preview.
+pub fn hideLinkEmbed(allocator: std.mem.Allocator, url: []const u8) ![]u8 {
+    return std.fmt.allocPrint(allocator, "<{s}>", .{url});
+}
 
 /// Markdown heading with a `level` of 1, 2, or 3. Returns
 /// `error.InvalidHeadingLevel` for any other value.
@@ -114,6 +127,30 @@ pub fn slashCommandMentionSub(allocator: std.mem.Allocator, name: []const u8, su
     return std.fmt.allocPrint(allocator, "</{s} {s}:{d}>", .{ name, sub, command_id.value });
 }
 
+/// Clickable slash-command mention with explicit subcommand group and subcommand:
+/// `</name group sub:id>`.
+pub fn chatInputApplicationCommandMention(
+    allocator: std.mem.Allocator,
+    name: []const u8,
+    group: []const u8,
+    subcommand: []const u8,
+    command_id: Snowflake,
+) ![]u8 {
+    if (name.len == 0 or group.len == 0 or subcommand.len == 0) return error.InvalidCommandName;
+    return std.fmt.allocPrint(allocator, "</{s} {s} {s}:{d}>", .{ name, group, subcommand, command_id.value });
+}
+
+pub fn time(allocator: std.mem.Allocator, unix_seconds: u64, style: ?TimestampStyle) ![]u8 {
+    if (style) |timestamp_style| {
+        return std.fmt.allocPrint(allocator, "<t:{d}:{c}>", .{ unix_seconds, @intFromEnum(timestamp_style) });
+    }
+    return std.fmt.allocPrint(allocator, "<t:{d}>", .{unix_seconds});
+}
+
+pub fn timestamp(allocator: std.mem.Allocator, unix_seconds: u64, style: ?TimestampStyle) ![]u8 {
+    return time(allocator, unix_seconds, style);
+}
+
 /// Multi-item unordered list: each item on its own `- ` line.
 pub fn unorderedList(allocator: std.mem.Allocator, items: []const []const u8) ![]u8 {
     var out = std.array_list.Managed(u8).init(allocator);
@@ -152,6 +189,36 @@ pub fn escapeMarkdown(allocator: std.mem.Allocator, text: []const u8) ![]u8 {
             '\\', '*', '_', '~', '`', '|' => try out.append('\\'),
             else => {},
         }
+        try out.append(char);
+    }
+    return out.toOwnedSlice();
+}
+
+pub fn escapeBold(allocator: std.mem.Allocator, text: []const u8) ![]u8 {
+    return escapeOnly(allocator, text, '*');
+}
+
+pub fn escapeItalic(allocator: std.mem.Allocator, text: []const u8) ![]u8 {
+    return escapeOnly(allocator, text, '_');
+}
+
+pub fn escapeUnderline(allocator: std.mem.Allocator, text: []const u8) ![]u8 {
+    return escapeOnly(allocator, text, '_');
+}
+
+pub fn escapeStrikethrough(allocator: std.mem.Allocator, text: []const u8) ![]u8 {
+    return escapeOnly(allocator, text, '~');
+}
+
+pub fn escapeSpoiler(allocator: std.mem.Allocator, text: []const u8) ![]u8 {
+    return escapeOnly(allocator, text, '|');
+}
+
+fn escapeOnly(allocator: std.mem.Allocator, text: []const u8, marker: u8) ![]u8 {
+    var out = std.array_list.Managed(u8).init(allocator);
+    errdefer out.deinit();
+    for (text) |char| {
+        if (char == '\\' or char == marker) try out.append('\\');
         try out.append(char);
     }
     return out.toOwnedSlice();
@@ -221,6 +288,10 @@ test "hyperlink helpers build markdown links" {
     const titled = try hyperlinkTitled(std.testing.allocator, "Discord", "https://discord.com", "Home");
     defer std.testing.allocator.free(titled);
     try std.testing.expectEqualStrings("[Discord](https://discord.com \"Home\")", titled);
+
+    const hidden = try hideLinkEmbed(std.testing.allocator, "https://example.com");
+    defer std.testing.allocator.free(hidden);
+    try std.testing.expectEqualStrings("<https://example.com>", hidden);
 }
 
 test "heading respects level and rejects out-of-range" {
@@ -253,6 +324,14 @@ test "slash command mentions build navigation tokens" {
     defer std.testing.allocator.free(sub);
     try std.testing.expectEqualStrings("</config set:456>", sub);
 
+    const grouped = try chatInputApplicationCommandMention(std.testing.allocator, "config", "role", "set", Snowflake.init(789));
+    defer std.testing.allocator.free(grouped);
+    try std.testing.expectEqualStrings("</config role set:789>", grouped);
+
+    const ts = try timestamp(std.testing.allocator, 1_717_350_000, .relative);
+    defer std.testing.allocator.free(ts);
+    try std.testing.expectEqualStrings("<t:1717350000:R>", ts);
+
     try std.testing.expectError(error.InvalidCommandName, slashCommandMention(std.testing.allocator, "", Snowflake.init(1)));
     try std.testing.expectError(error.InvalidCommandName, slashCommandMentionSub(std.testing.allocator, "config", "", Snowflake.init(1)));
 }
@@ -279,4 +358,8 @@ test "list and escape helpers build multi-item markdown" {
     const escaped = try escapeMarkdown(std.testing.allocator, "a*b_c~d`e|f\\g");
     defer std.testing.allocator.free(escaped);
     try std.testing.expectEqualStrings("a\\*b\\_c\\~d\\`e\\|f\\\\g", escaped);
+
+    const bold_escaped = try escapeBold(std.testing.allocator, "a*b\\c");
+    defer std.testing.allocator.free(bold_escaped);
+    try std.testing.expectEqualStrings("a\\*b\\\\c", bold_escaped);
 }
