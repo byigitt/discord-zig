@@ -44,6 +44,7 @@ pub const ButtonStyle = enum(u8) {
     success = 3,
     danger = 4,
     link = 5,
+    premium = 6,
 };
 
 pub const TextInputStyle = enum(u8) {
@@ -84,6 +85,8 @@ pub const max_choice_string_value_len = 100;
 pub const max_section_components = 3;
 pub const max_media_gallery_items = 10;
 
+pub const max_button_sku_id_len = 100;
+
 pub const ValidationError = error{
     TooManyActionRows,
     TooManyRowComponents,
@@ -92,6 +95,10 @@ pub const ValidationError = error{
     TooManyCommandChoices,
     CustomIdTooLong,
     ButtonLabelTooLong,
+    ButtonCustomIdRequired,
+    ButtonUrlRequired,
+    ButtonSkuIdRequired,
+    ButtonFieldConflict,
     SelectPlaceholderTooLong,
     SelectOptionLabelTooLong,
     SelectOptionValueTooLong,
@@ -104,12 +111,21 @@ pub const ValidationError = error{
     CommandDescriptionInvalid,
     OptionNameInvalid,
     OptionDescriptionInvalid,
+
     ChoiceNameTooLong,
     ChoiceValueTooLong,
     SectionComponentCountInvalid,
     MediaGalleryItemCountInvalid,
     InvalidUtf8,
 };
+
+fn writeComma(writer: anytype, needs_comma: *bool) !void {
+    if (needs_comma.*) {
+        try writer.writeByte(',');
+    } else {
+        needs_comma.* = true;
+    }
+}
 
 fn checkLen(value: []const u8, max_len: usize, too_long: ValidationError) ValidationError!void {
     const len = Json.codepointLen(value) catch return error.InvalidUtf8;
@@ -224,11 +240,45 @@ pub const Localization = struct {
     }
 };
 
+pub const ComponentEmoji = struct {
+    id: ?Snowflake = null,
+    name: ?[]const u8 = null,
+    animated: bool = false,
+
+    pub fn unicode(name: []const u8) ComponentEmoji {
+        return .{ .name = name };
+    }
+
+    pub fn custom(id: Snowflake, name: ?[]const u8, animated: bool) ComponentEmoji {
+        return .{ .id = id, .name = name, .animated = animated };
+    }
+
+    pub fn writeJson(self: ComponentEmoji, writer: anytype) !void {
+        try writer.writeByte('{');
+        var needs_comma = false;
+        if (self.id) |id| {
+            try writeComma(writer, &needs_comma);
+            try writer.print("\"id\":\"{d}\"", .{id.value});
+        }
+        if (self.name) |name| {
+            try writeComma(writer, &needs_comma);
+            try writer.writeAll("\"name\":");
+            try Json.writeString(name, writer);
+        }
+        if (self.animated) {
+            try writeComma(writer, &needs_comma);
+            try writer.writeAll("\"animated\":true");
+        }
+        try writer.writeByte('}');
+    }
+};
+
 pub const SelectOption = struct {
     label: []const u8,
     value: []const u8,
     description: ?[]const u8 = null,
     default: bool = false,
+    emoji: ?ComponentEmoji = null,
 
     pub fn init(label: []const u8, value: []const u8) SelectOption {
         return .{ .label = label, .value = value };
@@ -243,6 +293,12 @@ pub const SelectOption = struct {
     pub fn defaultState(self: SelectOption, default: bool) SelectOption {
         var option = self;
         option.default = default;
+        return option;
+    }
+
+    pub fn withEmoji(self: SelectOption, emoji: ComponentEmoji) SelectOption {
+        var option = self;
+        option.emoji = emoji;
         return option;
     }
 
@@ -266,6 +322,10 @@ pub const SelectOption = struct {
             try Json.writeString(description, writer);
         }
         if (self.default) try writer.writeAll(",\"default\":true");
+        if (self.emoji) |emoji| {
+            try writer.writeAll(",\"emoji\":");
+            try emoji.writeJson(writer);
+        }
         try writer.writeByte('}');
     }
 };
@@ -276,6 +336,8 @@ pub const Button = struct {
     style: ButtonStyle = .primary,
     url: ?[]const u8 = null,
     disabled: bool = false,
+    emoji: ?ComponentEmoji = null,
+    sku_id: ?Snowflake = null,
 
     pub fn primary(custom_id: []const u8, label: []const u8) Button {
         return .{ .custom_id = custom_id, .label = label, .style = .primary };
@@ -297,6 +359,10 @@ pub const Button = struct {
         return .{ .url = url, .label = label, .style = .link };
     }
 
+    pub fn premium(sku_id: Snowflake) Button {
+        return .{ .sku_id = sku_id, .style = .premium };
+    }
+
     pub fn withStyle(self: Button, style: ButtonStyle) Button {
         var button = self;
         button.style = style;
@@ -309,10 +375,40 @@ pub const Button = struct {
         return button;
     }
 
-    /// Rejects a button whose custom id or label exceeds the Discord limit.
+    pub fn withEmoji(self: Button, emoji: ComponentEmoji) Button {
+        var button = self;
+        button.emoji = emoji;
+        return button;
+    }
+
+    pub fn withSkuId(self: Button, sku_id: Snowflake) Button {
+        var button = self;
+        button.sku_id = sku_id;
+        return button;
+    }
+
+    /// Rejects a button whose fields exceed Discord limits or violate the style
+    /// contract: link buttons need a URL, premium buttons need a SKU id, and
+    /// interactive buttons need a custom id.
     pub fn validate(self: Button) ValidationError!void {
         if (self.custom_id) |custom_id| try checkLen(custom_id, max_custom_id_len, error.CustomIdTooLong);
         if (self.label) |label| try checkLen(label, max_button_label_len, error.ButtonLabelTooLong);
+        switch (self.style) {
+            .link => {
+                if (self.url == null) return error.ButtonUrlRequired;
+                if (self.custom_id != null or self.sku_id != null) return error.ButtonFieldConflict;
+            },
+            .premium => {
+                if (self.sku_id == null) return error.ButtonSkuIdRequired;
+                if (self.custom_id != null or self.url != null or self.label != null or self.emoji != null) {
+                    return error.ButtonFieldConflict;
+                }
+            },
+            else => {
+                if (self.custom_id == null) return error.ButtonCustomIdRequired;
+                if (self.url != null or self.sku_id != null) return error.ButtonFieldConflict;
+            },
+        }
     }
 
     fn writeJson(self: Button, writer: anytype) !void {
@@ -331,6 +427,13 @@ pub const Button = struct {
         if (self.url) |url| {
             try writer.writeAll(",\"url\":");
             try Json.writeString(url, writer);
+        }
+        if (self.emoji) |emoji| {
+            try writer.writeAll(",\"emoji\":");
+            try emoji.writeJson(writer);
+        }
+        if (self.sku_id) |sku_id| {
+            try writer.print(",\"sku_id\":\"{d}\"", .{sku_id.value});
         }
         if (self.disabled) try writer.writeAll(",\"disabled\":true");
         try writer.writeByte('}');
@@ -1700,6 +1803,97 @@ pub const InteractionRouter = struct {
     }
 };
 
+pub const InteractionRouterBuilder = struct {
+    allocator: std.mem.Allocator,
+    commands: std.array_list.Managed(CommandRoute),
+    autocomplete: std.array_list.Managed(CommandRoute),
+    components: std.array_list.Managed(ComponentRoute),
+    modals: std.array_list.Managed(ComponentRoute),
+    middleware: std.array_list.Managed(Middleware),
+    fallback: ?ParsedHandler = null,
+
+    pub fn init(allocator: std.mem.Allocator) InteractionRouterBuilder {
+        return .{
+            .allocator = allocator,
+            .commands = std.array_list.Managed(CommandRoute).init(allocator),
+            .autocomplete = std.array_list.Managed(CommandRoute).init(allocator),
+            .components = std.array_list.Managed(ComponentRoute).init(allocator),
+            .modals = std.array_list.Managed(ComponentRoute).init(allocator),
+            .middleware = std.array_list.Managed(Middleware).init(allocator),
+        };
+    }
+
+    pub fn deinit(self: *InteractionRouterBuilder) void {
+        self.commands.deinit();
+        self.autocomplete.deinit();
+        self.components.deinit();
+        self.modals.deinit();
+        self.middleware.deinit();
+        self.fallback = null;
+    }
+
+    pub fn command(self: *InteractionRouterBuilder, name: []const u8, handler: ParsedHandler) !void {
+        try self.commands.append(.{ .name = name, .handler = handler });
+    }
+
+    pub fn commandWithGuard(
+        self: *InteractionRouterBuilder,
+        name: []const u8,
+        handler: ParsedHandler,
+        guard: Middleware,
+    ) !void {
+        try self.commands.append(.{ .name = name, .handler = handler, .guard = guard });
+    }
+
+    pub fn autocompleteRoute(self: *InteractionRouterBuilder, name: []const u8, handler: ParsedHandler) !void {
+        try self.autocomplete.append(.{ .name = name, .handler = handler });
+    }
+
+    pub fn component(self: *InteractionRouterBuilder, custom_id: []const u8, handler: ParsedHandler) !void {
+        try self.components.append(.{ .custom_id = custom_id, .handler = handler });
+    }
+
+    pub fn componentPrefix(self: *InteractionRouterBuilder, prefix: []const u8, handler: ParsedHandler) !void {
+        try self.components.append(.{ .custom_id = prefix, .handler = handler, .match = .prefix });
+    }
+
+    pub fn componentWithGuard(
+        self: *InteractionRouterBuilder,
+        custom_id: []const u8,
+        handler: ParsedHandler,
+        guard: Middleware,
+    ) !void {
+        try self.components.append(.{ .custom_id = custom_id, .handler = handler, .guard = guard });
+    }
+
+    pub fn modal(self: *InteractionRouterBuilder, custom_id: []const u8, handler: ParsedHandler) !void {
+        try self.modals.append(.{ .custom_id = custom_id, .handler = handler });
+    }
+
+    pub fn modalPrefix(self: *InteractionRouterBuilder, prefix: []const u8, handler: ParsedHandler) !void {
+        try self.modals.append(.{ .custom_id = prefix, .handler = handler, .match = .prefix });
+    }
+
+    pub fn use(self: *InteractionRouterBuilder, middleware: Middleware) !void {
+        try self.middleware.append(middleware);
+    }
+
+    pub fn fallbackTo(self: *InteractionRouterBuilder, handler: ParsedHandler) void {
+        self.fallback = handler;
+    }
+
+    pub fn router(self: *const InteractionRouterBuilder) InteractionRouter {
+        return .{
+            .commands = self.commands.items,
+            .autocomplete = self.autocomplete.items,
+            .components = self.components.items,
+            .modals = self.modals.items,
+            .middleware = self.middleware.items,
+            .fallback = self.fallback,
+        };
+    }
+};
+
 pub fn parsedHandler(ptr: anytype, comptime function: anytype) ParsedHandler {
     const Ptr = @TypeOf(ptr);
     const wrapper = struct {
@@ -2078,6 +2272,275 @@ pub const ApplicationCommand = struct {
             try writeEnumIntArray(InteractionContextType, self.contexts, writer);
         }
         try writer.writeByte('}');
+    }
+};
+
+pub const ApplicationCommandAnnotationKind = enum {
+    chat_input,
+    user,
+    message,
+};
+
+pub const ApplicationCommandAnnotation = struct {
+    kind: ApplicationCommandAnnotationKind = .chat_input,
+    name: []const u8,
+    description: []const u8 = "",
+    options: []const ApplicationCommandOption = &.{},
+    default_member_permissions: ?u64 = null,
+    dm_permission: ?bool = null,
+    integration_types: []const IntegrationType = &.{},
+    contexts: []const InteractionContextType = &.{},
+    handler: ParsedHandler,
+    autocomplete_handler: ?ParsedHandler = null,
+    components: []const ComponentRoute = &.{},
+    modals: []const ComponentRoute = &.{},
+    middleware: []const Middleware = &.{},
+
+    pub fn slash(name: []const u8, description: []const u8, handler: ParsedHandler) ApplicationCommandAnnotation {
+        return .{ .name = name, .description = description, .handler = handler };
+    }
+
+    pub fn user(name: []const u8, handler: ParsedHandler) ApplicationCommandAnnotation {
+        return .{ .kind = .user, .name = name, .handler = handler };
+    }
+
+    pub fn message(name: []const u8, handler: ParsedHandler) ApplicationCommandAnnotation {
+        return .{ .kind = .message, .name = name, .handler = handler };
+    }
+
+    pub fn withOptions(self: ApplicationCommandAnnotation, options: []const ApplicationCommandOption) ApplicationCommandAnnotation {
+        var annotation = self;
+        annotation.options = options;
+        return annotation;
+    }
+
+    pub fn withDefaultMemberPermissions(self: ApplicationCommandAnnotation, permissions: u64) ApplicationCommandAnnotation {
+        var annotation = self;
+        annotation.default_member_permissions = permissions;
+        return annotation;
+    }
+
+    pub fn withDMPermission(self: ApplicationCommandAnnotation, allowed: bool) ApplicationCommandAnnotation {
+        var annotation = self;
+        annotation.dm_permission = allowed;
+        return annotation;
+    }
+
+    pub fn withIntegrationTypes(self: ApplicationCommandAnnotation, integration_types: []const IntegrationType) ApplicationCommandAnnotation {
+        var annotation = self;
+        annotation.integration_types = integration_types;
+        return annotation;
+    }
+
+    pub fn withContexts(self: ApplicationCommandAnnotation, contexts: []const InteractionContextType) ApplicationCommandAnnotation {
+        var annotation = self;
+        annotation.contexts = contexts;
+        return annotation;
+    }
+
+    pub fn withAutocomplete(self: ApplicationCommandAnnotation, handler: ParsedHandler) ApplicationCommandAnnotation {
+        var annotation = self;
+        annotation.autocomplete_handler = handler;
+        return annotation;
+    }
+
+    pub fn withComponents(self: ApplicationCommandAnnotation, components: []const ComponentRoute) ApplicationCommandAnnotation {
+        var annotation = self;
+        annotation.components = components;
+        return annotation;
+    }
+
+    pub fn withModals(self: ApplicationCommandAnnotation, modals: []const ComponentRoute) ApplicationCommandAnnotation {
+        var annotation = self;
+        annotation.modals = modals;
+        return annotation;
+    }
+
+    pub fn withMiddleware(self: ApplicationCommandAnnotation, middleware: []const Middleware) ApplicationCommandAnnotation {
+        var annotation = self;
+        annotation.middleware = middleware;
+        return annotation;
+    }
+
+    pub fn command(self: ApplicationCommandAnnotation) ApplicationCommand {
+        var definition = switch (self.kind) {
+            .chat_input => ApplicationCommand.chatInput(self.name, self.description),
+            .user => ApplicationCommand.user(self.name),
+            .message => ApplicationCommand.message(self.name),
+        };
+        if (self.options.len != 0) definition = definition.withOptions(self.options);
+        if (self.default_member_permissions) |permissions| definition = definition.withDefaultMemberPermissions(permissions);
+        if (self.dm_permission) |allowed| definition = definition.dmPermissionState(allowed);
+        if (self.integration_types.len != 0) definition = definition.withIntegrationTypes(self.integration_types);
+        if (self.contexts.len != 0) definition = definition.withContexts(self.contexts);
+        return definition;
+    }
+
+    pub fn module(self: ApplicationCommandAnnotation) ApplicationCommandModule {
+        var module_definition = ApplicationCommandModule.init(self.command(), self.handler)
+            .withComponents(self.components)
+            .withModals(self.modals)
+            .withMiddleware(self.middleware);
+        if (self.autocomplete_handler) |handler| module_definition = module_definition.withAutocomplete(handler);
+        return module_definition;
+    }
+
+    pub fn register(self: ApplicationCommandAnnotation, registry: *ApplicationCommandRegistry) !void {
+        var module_definition = ApplicationCommandModule.init(self.command(), self.handler)
+            .withComponents(self.components)
+            .withModals(self.modals)
+            .withMiddleware(self.middleware);
+        if (self.autocomplete_handler) |handler| module_definition = module_definition.withAutocomplete(handler);
+        try module_definition.register(registry);
+    }
+};
+
+pub const ApplicationCommandAnnotationManifest = struct {
+    annotations: []const ApplicationCommandAnnotation,
+
+    pub fn init(annotations: []const ApplicationCommandAnnotation) ApplicationCommandAnnotationManifest {
+        return .{ .annotations = annotations };
+    }
+
+    pub fn register(self: ApplicationCommandAnnotationManifest, registry: *ApplicationCommandRegistry) !void {
+        for (self.annotations) |annotation| try annotation.register(registry);
+    }
+
+    pub fn writeDefinitionsJson(self: ApplicationCommandAnnotationManifest, allocator: std.mem.Allocator, writer: anytype) !void {
+        var registry = ApplicationCommandRegistry.init(allocator);
+        defer registry.deinit();
+        try self.register(&registry);
+        try registry.writeDefinitionsJson(writer);
+    }
+};
+
+pub const ApplicationCommandModule = struct {
+    command_definition: ApplicationCommand,
+    handler: ParsedHandler,
+    autocomplete_handler: ?ParsedHandler = null,
+    components: []const ComponentRoute = &.{},
+    modals: []const ComponentRoute = &.{},
+    middleware: []const Middleware = &.{},
+
+    pub fn init(command_definition: ApplicationCommand, handler: ParsedHandler) ApplicationCommandModule {
+        return .{ .command_definition = command_definition, .handler = handler };
+    }
+
+    pub fn withAutocomplete(self: ApplicationCommandModule, handler: ParsedHandler) ApplicationCommandModule {
+        var module = self;
+        module.autocomplete_handler = handler;
+        return module;
+    }
+
+    pub fn withComponents(self: ApplicationCommandModule, components: []const ComponentRoute) ApplicationCommandModule {
+        var module = self;
+        module.components = components;
+        return module;
+    }
+
+    pub fn withModals(self: ApplicationCommandModule, modals: []const ComponentRoute) ApplicationCommandModule {
+        var module = self;
+        module.modals = modals;
+        return module;
+    }
+
+    pub fn withMiddleware(self: ApplicationCommandModule, middleware: []const Middleware) ApplicationCommandModule {
+        var module = self;
+        module.middleware = middleware;
+        return module;
+    }
+
+    pub fn register(self: ApplicationCommandModule, registry: *ApplicationCommandRegistry) !void {
+        try registry.addCommandRoute(self.command_definition, self.handler);
+        if (self.autocomplete_handler) |handler| try registry.addAutocompleteRoute(self.command_definition.name, handler);
+        for (self.components) |route| try registry.router_builder.components.append(route);
+        for (self.modals) |route| try registry.router_builder.modals.append(route);
+        for (self.middleware) |middleware| try registry.addMiddleware(middleware);
+    }
+};
+
+pub const ApplicationCommandManifest = struct {
+    modules: []const ApplicationCommandModule,
+
+    pub fn init(modules: []const ApplicationCommandModule) ApplicationCommandManifest {
+        return .{ .modules = modules };
+    }
+
+    pub fn register(self: ApplicationCommandManifest, registry: *ApplicationCommandRegistry) !void {
+        for (self.modules) |module| try module.register(registry);
+    }
+};
+
+pub const ApplicationCommandRegistry = struct {
+    allocator: std.mem.Allocator,
+    commands: std.array_list.Managed(ApplicationCommand),
+    router_builder: InteractionRouterBuilder,
+
+    pub fn init(allocator: std.mem.Allocator) ApplicationCommandRegistry {
+        return .{
+            .allocator = allocator,
+            .commands = std.array_list.Managed(ApplicationCommand).init(allocator),
+            .router_builder = InteractionRouterBuilder.init(allocator),
+        };
+    }
+
+    pub fn deinit(self: *ApplicationCommandRegistry) void {
+        self.commands.deinit();
+        self.router_builder.deinit();
+    }
+
+    pub fn addCommand(self: *ApplicationCommandRegistry, command_definition: ApplicationCommand) !void {
+        try command_definition.validate();
+        try self.commands.append(command_definition);
+    }
+
+    pub fn addCommandRoute(
+        self: *ApplicationCommandRegistry,
+        command_definition: ApplicationCommand,
+        handler: ParsedHandler,
+    ) !void {
+        try self.addCommand(command_definition);
+        try self.router_builder.command(command_definition.name, handler);
+    }
+
+    pub fn addAutocompleteRoute(
+        self: *ApplicationCommandRegistry,
+        command_name: []const u8,
+        handler: ParsedHandler,
+    ) !void {
+        try self.router_builder.autocompleteRoute(command_name, handler);
+    }
+
+    pub fn addComponentRoute(self: *ApplicationCommandRegistry, custom_id: []const u8, handler: ParsedHandler) !void {
+        try self.router_builder.component(custom_id, handler);
+    }
+
+    pub fn addComponentPrefixRoute(self: *ApplicationCommandRegistry, prefix: []const u8, handler: ParsedHandler) !void {
+        try self.router_builder.componentPrefix(prefix, handler);
+    }
+
+    pub fn addModalRoute(self: *ApplicationCommandRegistry, custom_id: []const u8, handler: ParsedHandler) !void {
+        try self.router_builder.modal(custom_id, handler);
+    }
+
+    pub fn addMiddleware(self: *ApplicationCommandRegistry, middleware: Middleware) !void {
+        try self.router_builder.use(middleware);
+    }
+
+    pub fn fallbackTo(self: *ApplicationCommandRegistry, handler: ParsedHandler) void {
+        self.router_builder.fallbackTo(handler);
+    }
+
+    pub fn definitions(self: *const ApplicationCommandRegistry) []const ApplicationCommand {
+        return self.commands.items;
+    }
+
+    pub fn router(self: *const ApplicationCommandRegistry) InteractionRouter {
+        return self.router_builder.router();
+    }
+
+    pub fn writeDefinitionsJson(self: *const ApplicationCommandRegistry, writer: anytype) !void {
+        try writeApplicationCommandArray(self.commands.items, writer);
     }
 };
 
@@ -2570,6 +3033,58 @@ fn componentTypeValue(value: std.json.Value) !ComponentType {
     };
 }
 
+pub const ButtonBuilder = Button;
+pub const StringSelectMenuBuilder = StringSelect;
+pub const UserSelectMenuBuilder = AutoSelect;
+pub const RoleSelectMenuBuilder = AutoSelect;
+pub const MentionableSelectMenuBuilder = AutoSelect;
+pub const ChannelSelectMenuBuilder = AutoSelect;
+pub const TextInputBuilder = TextInput;
+pub const ActionRowBuilder = Component;
+pub const SlashCommandBuilder = ApplicationCommand;
+pub const ContextMenuCommandBuilder = ApplicationCommand;
+pub const SlashCommandOptionBuilder = ApplicationCommandOption;
+pub const SlashCommandStringOption = ApplicationCommandOption;
+pub const SlashCommandIntegerOption = ApplicationCommandOption;
+pub const SlashCommandNumberOption = ApplicationCommandOption;
+pub const SlashCommandBooleanOption = ApplicationCommandOption;
+pub const SlashCommandUserOption = ApplicationCommandOption;
+pub const SlashCommandChannelOption = ApplicationCommandOption;
+pub const SlashCommandRoleOption = ApplicationCommandOption;
+pub const SlashCommandMentionableOption = ApplicationCommandOption;
+pub const SlashCommandAttachmentOption = ApplicationCommandOption;
+pub const SlashCommandSubcommandBuilder = ApplicationCommandOption;
+pub const SlashCommandSubcommandGroupBuilder = ApplicationCommandOption;
+pub const StringSelectMenuOptionBuilder = SelectOption;
+pub const ModalBuilder = InteractionResponse;
+pub const EmbedBuilder = @import("types.zig").Embed;
+
+test "discordjs style builder aliases compile to existing builders" {
+    var out = std.Io.Writer.Allocating.init(std.testing.allocator);
+    defer out.deinit();
+
+    const choices = [_]CommandChoice{CommandChoice.string("Ada", "ada")};
+    const options = [_]ApplicationCommandOption{
+        SlashCommandStringOption.string("user", "Target user", true).withChoices(&choices),
+    };
+    const row_children = [_]Component{
+        .{ .button = ButtonBuilder.primary("confirm", "Confirm") },
+    };
+
+    try SlashCommandBuilder.chatInput("inspect", "Inspect a user")
+        .withOptions(&options)
+        .writeJson(&out.writer);
+    try std.testing.expect(std.mem.indexOf(u8, out.written(), "\"name\":\"inspect\"") != null);
+
+    var components_out = std.Io.Writer.Allocating.init(std.testing.allocator);
+    defer components_out.deinit();
+    try ActionRowBuilder.actionRow(&row_children).writeJson(&components_out.writer);
+    try std.testing.expectEqualStrings(
+        "{\"type\":1,\"components\":[{\"type\":2,\"style\":1,\"custom_id\":\"confirm\",\"label\":\"Confirm\"}]}",
+        components_out.written(),
+    );
+}
+
 test "interaction response supports ephemeral message" {
     var out = std.Io.Writer.Allocating.init(std.testing.allocator);
     defer out.deinit();
@@ -2937,16 +3452,34 @@ test "string select component JSON" {
     defer out.deinit();
 
     const options = [_]SelectOption{
-        .{ .label = "One", .value = "1" },
+        SelectOption.init("One", "1").withEmoji(ComponentEmoji.unicode("1️⃣")),
         .{ .label = "Two", .value = "2", .default = true },
     };
     const component = Component{ .string_select = StringSelect.init("numbers", &options).withPlaceholder("Pick").withValueRange(1, 1).disabledState(true) };
 
     try component.writeJson(&out.writer);
     try std.testing.expectEqualStrings(
-        "{\"type\":3,\"custom_id\":\"numbers\",\"options\":[{\"label\":\"One\",\"value\":\"1\"},{\"label\":\"Two\",\"value\":\"2\",\"default\":true}],\"placeholder\":\"Pick\",\"min_values\":1,\"max_values\":1,\"disabled\":true}",
+        "{\"type\":3,\"custom_id\":\"numbers\",\"options\":[{\"label\":\"One\",\"value\":\"1\",\"emoji\":{\"name\":\"1️⃣\"}},{\"label\":\"Two\",\"value\":\"2\",\"default\":true}],\"placeholder\":\"Pick\",\"min_values\":1,\"max_values\":1,\"disabled\":true}",
         out.written(),
     );
+}
+
+test "button emoji premium and style validation" {
+    var out = std.Io.Writer.Allocating.init(std.testing.allocator);
+    defer out.deinit();
+
+    const button = Component{ .button = Button.primary("confirm", "Confirm").withEmoji(ComponentEmoji.unicode("✅")) };
+    try button.validate();
+    try button.writeJson(&out.writer);
+    try std.testing.expectEqualStrings(
+        "{\"type\":2,\"style\":1,\"custom_id\":\"confirm\",\"label\":\"Confirm\",\"emoji\":{\"name\":\"✅\"}}",
+        out.written(),
+    );
+
+    try std.testing.expectError(error.ButtonUrlRequired, (Button{ .style = .link, .label = "Docs" }).validate());
+    try std.testing.expectError(error.ButtonCustomIdRequired, (Button{ .style = .primary, .label = "Missing id" }).validate());
+    try Button.premium(Snowflake.init(42)).validate();
+    try std.testing.expectError(error.ButtonFieldConflict, Button.premium(Snowflake.init(42)).withEmoji(ComponentEmoji.unicode("x")).validate());
 }
 
 test "text input component builder helpers JSON" {
@@ -3123,6 +3656,246 @@ test "interaction router dispatches commands autocomplete components and modals"
     try std.testing.expect(state.autocomplete);
     try std.testing.expect(state.component);
     try std.testing.expect(state.modal);
+}
+
+test "interaction router builder registers routes incrementally" {
+    const State = struct {
+        command: usize = 0,
+        component: usize = 0,
+        modal: usize = 0,
+        fallback: usize = 0,
+
+        fn onCommand(self: *@This(), interaction: *const ParsedInteraction) !void {
+            try std.testing.expectEqualStrings("ping", interaction.data.?.name);
+            self.command += 1;
+        }
+
+        fn onComponent(self: *@This(), interaction: *const ParsedInteraction) !void {
+            try std.testing.expect(std.mem.startsWith(u8, interaction.component_data.?.custom_id, "menu:"));
+            self.component += 1;
+        }
+
+        fn onModal(self: *@This(), interaction: *const ParsedInteraction) !void {
+            try std.testing.expectEqualStrings("profile", interaction.component_data.?.custom_id);
+            self.modal += 1;
+        }
+
+        fn onFallback(self: *@This(), _: *const ParsedInteraction) !void {
+            self.fallback += 1;
+        }
+    };
+
+    var state = State{};
+    var builder = InteractionRouterBuilder.init(std.testing.allocator);
+    defer builder.deinit();
+
+    try builder.command("ping", parsedHandler(&state, State.onCommand));
+    try builder.componentPrefix("menu:", parsedHandler(&state, State.onComponent));
+    try builder.modal("profile", parsedHandler(&state, State.onModal));
+    builder.fallbackTo(parsedHandler(&state, State.onFallback));
+    const router = builder.router();
+
+    var command = try parseInteraction(
+        std.testing.allocator,
+        "{\"id\":\"1\",\"application_id\":\"2\",\"type\":2,\"token\":\"tok\",\"data\":{\"id\":\"5\",\"name\":\"ping\",\"type\":1}}",
+    );
+    defer command.deinit();
+    try std.testing.expect(try router.dispatch(&command));
+
+    var component = try parseInteraction(
+        std.testing.allocator,
+        "{\"id\":\"1\",\"application_id\":\"2\",\"type\":3,\"token\":\"tok\",\"data\":{\"custom_id\":\"menu:next\",\"component_type\":2}}",
+    );
+    defer component.deinit();
+    try std.testing.expect(try router.dispatch(&component));
+
+    var modal = try parseInteraction(
+        std.testing.allocator,
+        "{\"id\":\"1\",\"application_id\":\"2\",\"type\":5,\"token\":\"tok\",\"data\":{\"custom_id\":\"profile\",\"components\":[]}}",
+    );
+    defer modal.deinit();
+    try std.testing.expect(try router.dispatch(&modal));
+
+    var unknown = try parseInteraction(
+        std.testing.allocator,
+        "{\"id\":\"1\",\"application_id\":\"2\",\"type\":2,\"token\":\"tok\",\"data\":{\"id\":\"5\",\"name\":\"unknown\",\"type\":1}}",
+    );
+    defer unknown.deinit();
+    try std.testing.expect(try router.dispatch(&unknown));
+
+    try std.testing.expectEqual(@as(usize, 1), state.command);
+    try std.testing.expectEqual(@as(usize, 1), state.component);
+    try std.testing.expectEqual(@as(usize, 1), state.modal);
+    try std.testing.expectEqual(@as(usize, 1), state.fallback);
+}
+
+test "application command registry pairs definitions with router routes" {
+    const State = struct {
+        calls: usize = 0,
+
+        fn onPing(self: *@This(), interaction: *const ParsedInteraction) !void {
+            try std.testing.expectEqualStrings("ping", interaction.data.?.name);
+            self.calls += 1;
+        }
+    };
+
+    var state = State{};
+    var registry = ApplicationCommandRegistry.init(std.testing.allocator);
+    defer registry.deinit();
+
+    try registry.addCommandRoute(
+        ApplicationCommand.chatInput("ping", "Replies with pong"),
+        parsedHandler(&state, State.onPing),
+    );
+    try std.testing.expectEqual(@as(usize, 1), registry.definitions().len);
+
+    var out = std.Io.Writer.Allocating.init(std.testing.allocator);
+    defer out.deinit();
+    try registry.writeDefinitionsJson(&out.writer);
+    try std.testing.expectEqualStrings(
+        "[{\"name\":\"ping\",\"description\":\"Replies with pong\",\"type\":1}]",
+        out.written(),
+    );
+
+    var command = try parseInteraction(
+        std.testing.allocator,
+        "{\"id\":\"1\",\"application_id\":\"2\",\"type\":2,\"token\":\"tok\",\"data\":{\"id\":\"5\",\"name\":\"ping\",\"type\":1}}",
+    );
+    defer command.deinit();
+    try std.testing.expect(try registry.router().dispatch(&command));
+    try std.testing.expectEqual(@as(usize, 1), state.calls);
+}
+
+test "application command module registers command autocomplete and components" {
+    const State = struct {
+        command: usize = 0,
+        autocomplete: usize = 0,
+        component: usize = 0,
+
+        fn onCommand(self: *@This(), _: *const ParsedInteraction) !void {
+            self.command += 1;
+        }
+
+        fn onAutocomplete(self: *@This(), _: *const ParsedInteraction) !void {
+            self.autocomplete += 1;
+        }
+
+        fn onComponent(self: *@This(), _: *const ParsedInteraction) !void {
+            self.component += 1;
+        }
+    };
+
+    var state = State{};
+    const component_routes = [_]ComponentRoute{
+        .{ .custom_id = "module:", .match = .prefix, .handler = parsedHandler(&state, State.onComponent) },
+    };
+    const module = ApplicationCommandModule
+        .init(ApplicationCommand.chatInput("module", "Module command"), parsedHandler(&state, State.onCommand))
+        .withAutocomplete(parsedHandler(&state, State.onAutocomplete))
+        .withComponents(&component_routes);
+
+    var registry = ApplicationCommandRegistry.init(std.testing.allocator);
+    defer registry.deinit();
+    try module.register(&registry);
+
+    var command = try parseInteraction(
+        std.testing.allocator,
+        "{\"id\":\"1\",\"application_id\":\"2\",\"type\":2,\"token\":\"tok\",\"data\":{\"id\":\"5\",\"name\":\"module\",\"type\":1}}",
+    );
+    defer command.deinit();
+    try std.testing.expect(try registry.router().dispatch(&command));
+
+    var autocomplete = try parseInteraction(
+        std.testing.allocator,
+        "{\"id\":\"1\",\"application_id\":\"2\",\"type\":4,\"token\":\"tok\",\"data\":{\"id\":\"5\",\"name\":\"module\",\"type\":1}}",
+    );
+    defer autocomplete.deinit();
+    try std.testing.expect(try registry.router().dispatch(&autocomplete));
+
+    var component = try parseInteraction(
+        std.testing.allocator,
+        "{\"id\":\"1\",\"application_id\":\"2\",\"type\":3,\"token\":\"tok\",\"data\":{\"custom_id\":\"module:next\",\"component_type\":2}}",
+    );
+    defer component.deinit();
+    try std.testing.expect(try registry.router().dispatch(&component));
+
+    try std.testing.expectEqual(@as(usize, 1), state.command);
+    try std.testing.expectEqual(@as(usize, 1), state.autocomplete);
+    try std.testing.expectEqual(@as(usize, 1), state.component);
+}
+
+test "application command manifest registers multiple modules" {
+    const State = struct {
+        calls: usize = 0,
+
+        fn onAny(self: *@This(), _: *const ParsedInteraction) !void {
+            self.calls += 1;
+        }
+    };
+
+    var state = State{};
+    const modules = [_]ApplicationCommandModule{
+        ApplicationCommandModule.init(ApplicationCommand.chatInput("one", "First command"), parsedHandler(&state, State.onAny)),
+        ApplicationCommandModule.init(ApplicationCommand.chatInput("two", "Second command"), parsedHandler(&state, State.onAny)),
+    };
+    const manifest = ApplicationCommandManifest.init(&modules);
+
+    var registry = ApplicationCommandRegistry.init(std.testing.allocator);
+    defer registry.deinit();
+    try manifest.register(&registry);
+    try std.testing.expectEqual(@as(usize, 2), registry.definitions().len);
+
+    var one = try parseInteraction(
+        std.testing.allocator,
+        "{\"id\":\"1\",\"application_id\":\"2\",\"type\":2,\"token\":\"tok\",\"data\":{\"id\":\"5\",\"name\":\"one\",\"type\":1}}",
+    );
+    defer one.deinit();
+    try std.testing.expect(try registry.router().dispatch(&one));
+
+    var two = try parseInteraction(
+        std.testing.allocator,
+        "{\"id\":\"1\",\"application_id\":\"2\",\"type\":2,\"token\":\"tok\",\"data\":{\"id\":\"5\",\"name\":\"two\",\"type\":1}}",
+    );
+    defer two.deinit();
+    try std.testing.expect(try registry.router().dispatch(&two));
+    try std.testing.expectEqual(@as(usize, 2), state.calls);
+}
+
+test "application command annotations build definitions and modules" {
+    const State = struct {
+        calls: usize = 0,
+
+        fn onRun(self: *@This(), interaction: *const ParsedInteraction) !void {
+            try std.testing.expectEqualStrings("annotated", interaction.data.?.name);
+            self.calls += 1;
+        }
+    };
+
+    var state = State{};
+    const options = [_]ApplicationCommandOption{
+        ApplicationCommandOption.string("target", "Target name", true),
+    };
+    const annotation = ApplicationCommandAnnotation
+        .slash("annotated", "Annotated command", parsedHandler(&state, State.onRun))
+        .withOptions(&options)
+        .withDMPermission(false);
+
+    const definition = annotation.command();
+    try std.testing.expectEqualStrings("annotated", definition.name);
+    try std.testing.expectEqual(@as(usize, 1), definition.options.len);
+    try std.testing.expectEqual(@as(?bool, false), definition.dm_permission);
+
+    var registry = ApplicationCommandRegistry.init(std.testing.allocator);
+    defer registry.deinit();
+    try annotation.register(&registry);
+
+    var interaction = try parseInteraction(
+        std.testing.allocator,
+        "{\"id\":\"1\",\"application_id\":\"2\",\"type\":2,\"token\":\"tok\",\"data\":{\"id\":\"5\",\"name\":\"annotated\",\"type\":1}}",
+    );
+    defer interaction.deinit();
+    try std.testing.expect(try registry.router().dispatch(&interaction));
+    try std.testing.expectEqual(@as(usize, 1), state.calls);
 }
 
 test "string select validate rejects option overflow at the limit boundary" {
