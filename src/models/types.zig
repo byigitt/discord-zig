@@ -1,8 +1,8 @@
 const std = @import("std");
-const Snowflake = @import("snowflake.zig").Snowflake;
-const Json = @import("json.zig");
-const Interactions = @import("interactions.zig");
-const Permissions = @import("permissions.zig");
+const Snowflake = @import("../core/snowflake.zig").Snowflake;
+const Json = @import("../core/json.zig");
+const Interactions = @import("../interactions/mod.zig");
+const Permissions = @import("../core/permissions.zig");
 
 pub const User = struct {
     id: Snowflake,

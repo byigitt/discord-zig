@@ -1,15 +1,15 @@
 const std = @import("std");
-const Intents = @import("intents.zig");
-const Rest = @import("rest.zig");
-const HttpTransport = @import("http_transport.zig").HttpTransport;
-const Events = @import("events.zig");
-const Gateway = @import("gateway.zig");
-const GatewaySession = @import("gateway_session.zig");
+const Intents = @import("../core/intents.zig");
+const Rest = @import("../rest/client.zig");
+const HttpTransport = @import("../rest/http_transport.zig").HttpTransport;
+const Events = @import("../gateway/events.zig");
+const Gateway = @import("../gateway/protocol.zig");
+const GatewaySession = @import("../gateway/session.zig");
 const CacheModule = @import("cache.zig");
 const Cache = CacheModule.Cache;
-const Types = @import("types.zig");
-const Interactions = @import("interactions.zig");
-const Snowflake = @import("snowflake.zig").Snowflake;
+const Types = @import("../models/types.zig");
+const Interactions = @import("../interactions/mod.zig");
+const Snowflake = @import("../core/snowflake.zig").Snowflake;
 
 pub const ClientOptions = struct {
     token: []const u8,

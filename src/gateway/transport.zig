@@ -1,5 +1,5 @@
 const std = @import("std");
-const GatewaySession = @import("gateway_session.zig");
+const GatewaySession = @import("session.zig");
 const WebSocket = @import("websocket.zig");
 
 pub const ConnectOptions = struct {

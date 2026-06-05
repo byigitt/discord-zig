@@ -1,9 +1,9 @@
 const std = @import("std");
-const Api = @import("api.zig");
+const Api = @import("../core/api.zig");
 const Routes = @import("routes.zig");
-const Types = @import("types.zig");
-const Interactions = @import("interactions.zig");
-const Snowflake = @import("snowflake.zig").Snowflake;
+const Types = @import("../models/types.zig");
+const Interactions = @import("../interactions/mod.zig");
+const Snowflake = @import("../core/snowflake.zig").Snowflake;
 
 pub const Header = struct {
     name: []const u8,

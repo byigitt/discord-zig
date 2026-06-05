@@ -1,7 +1,7 @@
 const std = @import("std");
-const Api = @import("api.zig");
-const Json = @import("json.zig");
-const Snowflake = @import("snowflake.zig").Snowflake;
+const Api = @import("../core/api.zig");
+const Json = @import("../core/json.zig");
+const Snowflake = @import("../core/snowflake.zig").Snowflake;
 
 pub const Opcode = enum(u8) {
     dispatch = 0,

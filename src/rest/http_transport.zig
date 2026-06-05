@@ -1,5 +1,5 @@
 const std = @import("std");
-const Rest = @import("rest.zig");
+const Rest = @import("client.zig");
 const Routes = @import("routes.zig");
 
 pub const HttpTransport = struct {

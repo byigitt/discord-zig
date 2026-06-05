@@ -1,10 +1,10 @@
 const std = @import("std");
-const Snowflake = @import("snowflake.zig").Snowflake;
-const Types = @import("types.zig");
-const Gateway = @import("gateway.zig");
-const Interactions = @import("interactions.zig");
-const Permissions = @import("permissions.zig");
-const Collection = @import("collection.zig").Collection;
+const Snowflake = @import("../core/snowflake.zig").Snowflake;
+const Types = @import("../models/types.zig");
+const Gateway = @import("../gateway/protocol.zig");
+const Interactions = @import("../interactions/mod.zig");
+const Permissions = @import("../core/permissions.zig");
+const Collection = @import("../core/collection.zig").Collection;
 
 pub const CachePolicy = struct {
     users: bool = true,

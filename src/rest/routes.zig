@@ -1,6 +1,6 @@
 const std = @import("std");
-const Snowflake = @import("snowflake.zig").Snowflake;
-const Types = @import("types.zig");
+const Snowflake = @import("../core/snowflake.zig").Snowflake;
+const Types = @import("../models/types.zig");
 
 pub const Method = enum {
     GET,

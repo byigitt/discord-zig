@@ -1,8 +1,8 @@
 const std = @import("std");
-const Snowflake = @import("snowflake.zig").Snowflake;
-const Types = @import("types.zig");
-const Interactions = @import("interactions.zig");
-const Gateway = @import("gateway.zig");
+const Snowflake = @import("../core/snowflake.zig").Snowflake;
+const Types = @import("../models/types.zig");
+const Interactions = @import("mod.zig");
+const Gateway = @import("../gateway/protocol.zig");
 
 pub const CollectorStatus = enum {
     collecting,

@@ -10,9 +10,9 @@
 //! actual audio transport is left to an external integration.
 
 const std = @import("std");
-const Gateway = @import("gateway.zig");
-const Json = @import("json.zig");
-const Snowflake = @import("snowflake.zig").Snowflake;
+const Gateway = @import("../gateway/protocol.zig");
+const Json = @import("../core/json.zig");
+const Snowflake = @import("../core/snowflake.zig").Snowflake;
 
 pub const gateway_version: u8 = 8;
 

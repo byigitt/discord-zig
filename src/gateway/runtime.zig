@@ -1,7 +1,7 @@
 const std = @import("std");
-const ClientModule = @import("client.zig");
-const GatewaySession = @import("gateway_session.zig");
-const GatewayTransport = @import("gateway_transport.zig");
+const ClientModule = @import("../client/client.zig");
+const GatewaySession = @import("session.zig");
+const GatewayTransport = @import("transport.zig");
 
 pub const RunOptions = struct {
     gateway: GatewayTransport.ConnectOptions = .{},

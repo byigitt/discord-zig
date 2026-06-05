@@ -1,6 +1,6 @@
 const std = @import("std");
-const Snowflake = @import("snowflake.zig").Snowflake;
-const Json = @import("json.zig");
+const Snowflake = @import("../core/snowflake.zig").Snowflake;
+const Json = @import("../core/json.zig");
 
 pub const InteractionType = enum(u8) {
     ping = 1,
@@ -3057,7 +3057,7 @@ pub const SlashCommandSubcommandBuilder = ApplicationCommandOption;
 pub const SlashCommandSubcommandGroupBuilder = ApplicationCommandOption;
 pub const StringSelectMenuOptionBuilder = SelectOption;
 pub const ModalBuilder = InteractionResponse;
-pub const EmbedBuilder = @import("types.zig").Embed;
+pub const EmbedBuilder = @import("../models/types.zig").Embed;
 
 test "discordjs style builder aliases compile to existing builders" {
     var out = std.Io.Writer.Allocating.init(std.testing.allocator);

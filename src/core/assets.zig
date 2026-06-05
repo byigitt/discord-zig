@@ -1,6 +1,6 @@
 const std = @import("std");
 const Snowflake = @import("snowflake.zig").Snowflake;
-const Types = @import("types.zig");
+const Types = @import("../models/types.zig");
 
 pub const cdn_base = "https://cdn.discordapp.com";
 

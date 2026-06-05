@@ -49,6 +49,18 @@ References:
 - https://docs.discord.com/developers/resources/message
 - https://docs.discord.com/developers/resources/poll
 
+## Source layout
+
+The public module root stays at `src/discord.zig`. It re-exports the stable API surface while implementation code is grouped by domain:
+
+- `src/core/`: API constants, snowflakes, intents, permissions, JSON helpers, mentions, links, assets, collections, and formatters
+- `src/models/`: Discord resource and payload models
+- `src/rest/`: REST routes, client helpers, transports, uploads, and rate-limit handling
+- `src/gateway/`: Gateway payloads, sessions, transports, runtimes, events, sharding, and WebSocket framing
+- `src/interactions/`: application commands, components, callbacks, routers, and collectors
+- `src/client/`: high-level client orchestration and cache state
+- `src/voice/`: voice gateway, audio resource, player, receive, and codec adapter helpers
+
 ## Example
 
 ```zig

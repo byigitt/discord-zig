@@ -23,6 +23,10 @@ It is not a one-to-one Discord.js port. The API intentionally uses Zig ownership
 
 The library is a practical replacement for basic to moderately complex Discord.js bot foundations. It does not try to mirror every Discord.js abstraction or cover every low-priority Discord resource model. Bundled native Opus codecs, advanced process-manager clustering policies, decorators, and platform-specific shutdown integration remain separate subsystems rather than hidden client behavior.
 
+## Source layout
+
+`src/discord.zig` remains the public module root and compatibility export surface. Implementation code is organized by domain under `src/core`, `src/models`, `src/rest`, `src/gateway`, `src/interactions`, `src/client`, and `src/voice` so contributors can navigate to the subsystem they are changing without scanning a flat source directory.
+
 ## Validation commands
 
 ```sh

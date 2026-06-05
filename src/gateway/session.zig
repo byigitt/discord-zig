@@ -1,5 +1,5 @@
 const std = @import("std");
-const Gateway = @import("gateway.zig");
+const Gateway = @import("protocol.zig");
 const WebSocket = @import("websocket.zig");
 
 pub const Transport = struct {
@@ -389,7 +389,7 @@ test "session identifies and heartbeats" {
     try std.testing.expect(std.mem.indexOf(u8, memory.sent.items[2], "\"status\":\"idle\"") != null);
 
     try session.requestGuildMembers(.{
-        .guild_id = @import("snowflake.zig").Snowflake.init(10),
+        .guild_id = @import("../core/snowflake.zig").Snowflake.init(10),
         .query = "",
         .limit = 0,
     });
@@ -397,21 +397,21 @@ test "session identifies and heartbeats" {
     try std.testing.expect(std.mem.indexOf(u8, memory.sent.items[3], "\"guild_id\":\"10\"") != null);
 
     try session.requestSoundboardSounds(.{
-        .guild_ids = &.{@import("snowflake.zig").Snowflake.init(10)},
+        .guild_ids = &.{@import("../core/snowflake.zig").Snowflake.init(10)},
     });
     try std.testing.expect(std.mem.indexOf(u8, memory.sent.items[4], "\"op\":31") != null);
     try std.testing.expect(std.mem.indexOf(u8, memory.sent.items[4], "\"guild_ids\":[\"10\"]") != null);
 
     try session.requestChannelInfo(.{
-        .guild_id = @import("snowflake.zig").Snowflake.init(10),
+        .guild_id = @import("../core/snowflake.zig").Snowflake.init(10),
         .fields = &.{ .status, .voice_start_time },
     });
     try std.testing.expect(std.mem.indexOf(u8, memory.sent.items[5], "\"op\":43") != null);
     try std.testing.expect(std.mem.indexOf(u8, memory.sent.items[5], "\"fields\":[\"status\",\"voice_start_time\"]") != null);
 
     try session.updateVoiceState(.{
-        .guild_id = @import("snowflake.zig").Snowflake.init(10),
-        .channel_id = @import("snowflake.zig").Snowflake.init(20),
+        .guild_id = @import("../core/snowflake.zig").Snowflake.init(10),
+        .channel_id = @import("../core/snowflake.zig").Snowflake.init(20),
         .self_mute = true,
     });
     try std.testing.expect(std.mem.indexOf(u8, memory.sent.items[6], "\"op\":4") != null);

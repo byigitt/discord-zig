@@ -1,6 +1,6 @@
 const std = @import("std");
-const Gateway = @import("gateway.zig");
-const Interactions = @import("interactions.zig");
+const Gateway = @import("protocol.zig");
+const Interactions = @import("../interactions/mod.zig");
 
 pub const RawHandler = struct {
     ptr: *anyopaque,
