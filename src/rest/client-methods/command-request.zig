@@ -451,18 +451,29 @@ pub fn Methods(comptime Client: type) type {
 
         pub fn finishRequest(self: *Client, route: Routes.Route, response: Response) !Response {
             const key = try Routes.bucketKey(self.allocator, route);
-            errdefer self.allocator.free(key);
-            var state = self.rate_limits.get(key) orelse RateLimitState{};
-            state.updateFromHeaders(response.headers);
+            var key_owned = true;
+            errdefer if (key_owned) self.allocator.free(key);
 
             const existing = try self.rate_limits.getOrPut(key);
+            var inserted = false;
             if (existing.found_existing) {
                 self.allocator.free(key);
-                existing.value_ptr.* = state;
+                key_owned = false;
             } else {
-                existing.value_ptr.* = state;
+                existing.value_ptr.* = RateLimitState{};
+                inserted = true;
+                key_owned = false;
+            }
+            errdefer {
+                if (inserted) {
+                    const inserted_key = existing.key_ptr.*;
+                    existing.value_ptr.deinit(self.allocator);
+                    _ = self.rate_limits.remove(inserted_key);
+                    self.allocator.free(inserted_key);
+                }
             }
 
+            try existing.value_ptr.updateFromHeaders(self.allocator, response.headers);
             return response;
         }
     };

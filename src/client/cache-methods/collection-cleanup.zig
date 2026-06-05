@@ -636,10 +636,9 @@ pub fn Methods(comptime Cache: type) type {
 
         pub fn putInvite(self: *Cache, invite: Types.Invite) !void {
             if (!self.policy.invites) return;
-            if (self.invites.fetchRemove(invite.code)) |old| old.value.deinit(self.allocator);
             var owned = try OwnedInvite.copy(self.allocator, invite);
             errdefer owned.deinit(self.allocator);
-            try self.invites.put(owned.code, owned);
+            if (try self.invites.fetchPut(owned.code, owned)) |old| old.value.deinit(self.allocator);
         }
 
         pub fn removeInvite(self: *Cache, code: []const u8) void {

@@ -355,6 +355,7 @@ pub fn copyApplication(allocator: std.mem.Allocator, application: Types.Applicat
     const tags = try copyStringArray(allocator, application.tags);
     errdefer deinitStringArray(tags, allocator);
     const custom_install_url = if (application.custom_install_url) |value| try allocator.dupe(u8, value) else null;
+    errdefer if (custom_install_url) |value| allocator.free(value);
     const team = if (application.team) |value| try copyTeam(allocator, value) else null;
     errdefer if (team) |value| deinitTeam(value, allocator);
 

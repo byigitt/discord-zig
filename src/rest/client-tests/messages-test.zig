@@ -33,6 +33,7 @@ test "REST createMessage serializes payload and records rate limit headers" {
         .headers = &.{
             .{ .name = "X-RateLimit-Remaining", .value = "4" },
             .{ .name = "X-RateLimit-Reset-After", .value = "0.250" },
+            .{ .name = "X-RateLimit-Bucket", .value = "bucket-a" },
         },
     });
     defer memory.deinit();
@@ -45,6 +46,12 @@ test "REST createMessage serializes payload and records rate limit headers" {
     try std.testing.expect(memory.last_request != null);
     try std.testing.expectEqualStrings("https://discord.com/api/v10/channels/123/messages", memory.last_request.?.url);
     try std.testing.expectEqualStrings("{\"content\":\"pong\"}", memory.last_request.?.body.?);
+
+    const state = client.rate_limits.get("POST:/channels/{channel_id}/messages:123").?;
+    try std.testing.expectEqual(@as(u32, 4), state.remaining.?);
+    try std.testing.expectEqual(@as(u64, 250), state.reset_after_ms.?);
+    try std.testing.expectEqualStrings("bucket-a", state.bucket.?);
+    try std.testing.expect(state.bucket.?.ptr != memory.response.headers[2].value.ptr);
 }
 
 test "REST createInteractionResponse serializes callback payload" {

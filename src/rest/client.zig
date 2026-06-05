@@ -58,7 +58,12 @@ pub const RateLimitState = struct {
     bucket: ?[]const u8 = null,
     global: bool = false,
 
-    pub fn updateFromHeaders(self: *RateLimitState, headers: []const Header) void {
+    pub fn deinit(self: *RateLimitState, allocator: std.mem.Allocator) void {
+        if (self.bucket) |bucket| allocator.free(bucket);
+        self.bucket = null;
+    }
+
+    pub fn updateFromHeaders(self: *RateLimitState, allocator: std.mem.Allocator, headers: []const Header) !void {
         for (headers) |header| {
             if (std.ascii.eqlIgnoreCase(header.name, "X-RateLimit-Remaining")) {
                 self.remaining = std.fmt.parseInt(u32, header.value, 10) catch self.remaining;
@@ -66,7 +71,9 @@ pub const RateLimitState = struct {
                 const seconds = std.fmt.parseFloat(f64, header.value) catch continue;
                 self.reset_after_ms = @intFromFloat(seconds * 1000.0);
             } else if (std.ascii.eqlIgnoreCase(header.name, "X-RateLimit-Bucket")) {
-                self.bucket = header.value;
+                const owned = try allocator.dupe(u8, header.value);
+                if (self.bucket) |bucket| allocator.free(bucket);
+                self.bucket = owned;
             } else if (std.ascii.eqlIgnoreCase(header.name, "X-RateLimit-Global")) {
                 self.global = std.ascii.eqlIgnoreCase(header.value, "true");
             }

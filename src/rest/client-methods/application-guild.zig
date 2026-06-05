@@ -37,8 +37,11 @@ pub fn Methods(comptime Client: type) type {
         }
 
         pub fn deinit(self: *Client) void {
-            var it = self.rate_limits.keyIterator();
-            while (it.next()) |key| self.allocator.free(key.*);
+            var it = self.rate_limits.iterator();
+            while (it.next()) |entry| {
+                self.allocator.free(entry.key_ptr.*);
+                entry.value_ptr.deinit(self.allocator);
+            }
             self.rate_limits.deinit();
         }
 

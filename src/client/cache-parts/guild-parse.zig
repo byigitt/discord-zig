@@ -44,8 +44,7 @@ pub fn roleKey(guild_id: Snowflake, role_id: Snowflake) u128 {
 }
 
 pub fn replaceOwned(comptime T: type, map: anytype, allocator: std.mem.Allocator, key: anytype, value: T) !void {
-    if (map.fetchRemove(key)) |old| old.value.deinit(allocator);
-    try map.put(key, value);
+    if (try map.fetchPut(key, value)) |old| old.value.deinit(allocator);
 }
 
 pub fn clearOwnedMap(map: anytype, allocator: std.mem.Allocator) void {
