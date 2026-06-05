@@ -14,9 +14,9 @@ const Gateway = @import("../gateway/protocol.zig");
 const Json = @import("../core/json.zig");
 const Snowflake = @import("../core/snowflake.zig").Snowflake;
 
-const transport_receive_audio = @import("voice/transport_receive_audio.zig");
-const player_gateway_payloads = @import("voice/player_gateway_payloads.zig");
-const codec_test_helpers = @import("voice/codec_test_helpers.zig");
+const transport_receive_audio = @import("voice/receive-audio.zig");
+const player_gateway_payloads = @import("voice/player-gateway.zig");
+const codec_test_helpers = @import("voice/codec-tests.zig");
 
 pub const gateway_version = transport_receive_audio.gateway_version;
 pub const VoiceIdentifyOptions = transport_receive_audio.VoiceIdentifyOptions;

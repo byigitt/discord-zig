@@ -17,7 +17,7 @@ It is not a one-to-one Discord.js port. The API intentionally uses Zig ownership
 - Local validation for application commands, options, choices, components, embeds, allowed mentions, and message payload limits
 - Cache hydration and updates for current user/application, guilds, channels, messages, members, roles, emojis, stickers, presences, voice states, invites, stage instances, scheduled events, and common dispatches
 - Discord.js-like conveniences for common client calls, event registration, richer collections, formatter aliases, template/webhook links, mention aliases, expanded asset/CDN URL helpers, and shard latency/readiness aggregation
-- Offline examples plus a live `examples/e2e_check.zig` smoke test for token-backed API checks
+- Offline examples plus a live `examples/e2e-check.zig` smoke test for token-backed API checks
 
 ## Current boundary
 
@@ -25,7 +25,7 @@ The library is a practical replacement for basic to moderately complex Discord.j
 
 ## Source layout
 
-`src/discord.zig` remains the public module root and compatibility export surface. Implementation code is organized by domain under `src/core`, `src/models`, `src/rest`, `src/gateway`, `src/interactions`, `src/client`, and `src/voice` so contributors can navigate to the subsystem they are changing without scanning a flat source directory. Each Zig source file is kept below 1000 lines; large domains are split into named submodules, method mixins, and test modules whose filenames describe the behavior they contain.
+`src/discord.zig` remains the public module root and compatibility export surface. Implementation code is organized by domain under `src/core`, `src/models`, `src/rest`, `src/gateway`, `src/interactions`, `src/client`, and `src/voice` so contributors can navigate to the subsystem they are changing without scanning a flat source directory. Each Zig source file is kept below 1000 lines; file and subdirectory names use short kebab-case path segments with at most two words.
 
 ## Validation commands
 

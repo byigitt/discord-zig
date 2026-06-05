@@ -61,7 +61,7 @@ The public module root stays at `src/discord.zig`. It re-exports the stable API 
 - `src/client/`: high-level client orchestration and cache state
 - `src/voice/`: voice gateway, audio resource, player, receive, and codec adapter helpers
 
-Implementation files are kept below 1000 lines. Larger domains use small aggregator files plus named submodules such as `message_details_polls.zig`, `application_commands_interactions.zig`, `lifecycle_events.zig`, and `cache_state_test.zig` so contributors can open a file by responsibility without changing the public `discord.zig` entrypoint.
+Implementation files are kept below 1000 lines. File and subdirectory names use short kebab-case path segments with at most two words, such as `message-polls.zig`, `app-commands.zig`, `lifecycle-events.zig`, and `cache-test.zig`, so contributors can open a file by responsibility without changing the public `discord.zig` entrypoint.
 
 ## Example
 
@@ -932,7 +932,7 @@ const last_interaction_id = interaction_collector.last_interaction_id;
 
 Collectors keep only counters, status, timestamps, and the last collected snowflake so callers can drive simple flows without retaining payloads.
 
-`examples/ping_bot.zig` uses an in-memory transport so it can run without a real bot token. `examples/slash_bot.zig` is an offline cookbook for slash commands: it defines and validates a command, routes an interaction through the `InteractionRouter` to a typed handler, and builds an ephemeral reply and a colored embed.
+`examples/ping-bot.zig` uses an in-memory transport so it can run without a real bot token. `examples/slash-bot.zig` is an offline cookbook for slash commands: it defines and validates a command, routes an interaction through the `InteractionRouter` to a typed handler, and builds an ephemeral reply and a colored embed.
 
 For live REST calls, initialize the client with its owned HTTP transport:
 

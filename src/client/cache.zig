@@ -6,13 +6,13 @@ const Interactions = @import("../interactions/mod.zig");
 const Permissions = @import("../core/permissions.zig");
 const Collection = @import("../core/collection.zig").Collection;
 
-const test_ready_stats = @import("cache_tests/ready_stats_test.zig");
-const test_messages_presence_voice = @import("cache_tests/messages_presence_voice_test.zig");
-const test_message_updates_reactions = @import("cache_tests/message_updates_reactions_test.zig");
-const test_collections_guild_hydration = @import("cache_tests/collections_guild_hydration_test.zig");
-const test_guild_resource_dispatch = @import("cache_tests/guild_resource_dispatch_test.zig");
-const test_invites_members_channels = @import("cache_tests/invites_members_channels_test.zig");
-const test_thread_collections = @import("cache_tests/thread_collections_test.zig");
+const test_ready_stats = @import("cache-tests/ready-test.zig");
+const test_messages_presence_voice = @import("cache-tests/presence-test.zig");
+const test_message_updates_reactions = @import("cache-tests/reactions-test.zig");
+const test_collections_guild_hydration = @import("cache-tests/collection-test.zig");
+const test_guild_resource_dispatch = @import("cache-tests/resources-test.zig");
+const test_invites_members_channels = @import("cache-tests/channels-test.zig");
+const test_thread_collections = @import("cache-tests/threads-test.zig");
 
 pub const CachePolicy = struct {
     users: bool = true,
@@ -127,10 +127,10 @@ pub const Cache = struct {
     /// Applies the configured cache sweepers at time `now_ms` (Unix ms) and
     /// returns how many entries were evicted. Call this from a runtime timer to
     /// schedule periodic sweeps; `CachePolicy` controls what is swept.
-    const identity_guild_collections_methods = @import("cache_methods/identity_guild_collections.zig").Methods(@This());
-    const collection_views_cleanup_methods = @import("cache_methods/collection_views_cleanup.zig").Methods(@This());
-    const guild_dispatch_hydration_methods = @import("cache_methods/guild_dispatch_hydration.zig").Methods(@This());
-    const message_dispatch_updates_methods = @import("cache_methods/message_dispatch_updates.zig").Methods(@This());
+    const identity_guild_collections_methods = @import("cache-methods/identity-guild.zig").Methods(@This());
+    const collection_views_cleanup_methods = @import("cache-methods/collection-cleanup.zig").Methods(@This());
+    const guild_dispatch_hydration_methods = @import("cache-methods/guild-hydration.zig").Methods(@This());
+    const message_dispatch_updates_methods = @import("cache-methods/message-updates.zig").Methods(@This());
     pub const init = identity_guild_collections_methods.init;
     pub const initWithPolicy = identity_guild_collections_methods.initWithPolicy;
     pub const deinit = identity_guild_collections_methods.deinit;
@@ -308,16 +308,16 @@ pub const Cache = struct {
     pub const incrementGuildMemberCount = message_dispatch_updates_methods.incrementGuildMemberCount;
     pub const decrementGuildMemberCount = message_dispatch_updates_methods.decrementGuildMemberCount;
 };
-const cache_owned_core_models = @import("cache_parts/owned_core_models.zig");
-const cache_owned_guild_assets = @import("cache_parts/owned_guild_assets.zig");
-const cache_owned_presence_messages = @import("cache_parts/owned_presence_messages.zig");
-const cache_message_component_copy = @import("cache_parts/message_component_copy.zig");
-const cache_poll_user_application_copy = @import("cache_parts/poll_user_application_copy.zig");
-const cache_channel_embed_reaction_copy = @import("cache_parts/channel_embed_reaction_copy.zig");
-const cache_json_guild_channel_parse = @import("cache_parts/json_guild_channel_parse.zig");
-const cache_json_role_event_parse = @import("cache_parts/json_role_event_parse.zig");
-const cache_json_message_component_parse = @import("cache_parts/json_message_component_parse.zig");
-const cache_json_embed_reaction_parse = @import("cache_parts/json_embed_reaction_parse.zig");
+const cache_owned_core_models = @import("cache-parts/owned-core.zig");
+const cache_owned_guild_assets = @import("cache-parts/owned-assets.zig");
+const cache_owned_presence_messages = @import("cache-parts/owned-messages.zig");
+const cache_message_component_copy = @import("cache-parts/component-copy.zig");
+const cache_poll_user_application_copy = @import("cache-parts/application-copy.zig");
+const cache_channel_embed_reaction_copy = @import("cache-parts/channel-copy.zig");
+const cache_json_guild_channel_parse = @import("cache-parts/guild-parse.zig");
+const cache_json_role_event_parse = @import("cache-parts/role-parse.zig");
+const cache_json_message_component_parse = @import("cache-parts/message-parse.zig");
+const cache_json_embed_reaction_parse = @import("cache-parts/embed-parse.zig");
 
 pub const OwnedUser = cache_owned_core_models.OwnedUser;
 pub const OwnedGuild = cache_owned_core_models.OwnedGuild;

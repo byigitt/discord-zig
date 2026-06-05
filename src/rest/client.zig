@@ -5,13 +5,13 @@ const Types = @import("../models/types.zig");
 const Interactions = @import("../interactions/mod.zig");
 const Snowflake = @import("../core/snowflake.zig").Snowflake;
 
-const test_messages_interactions_guild = @import("client_tests/messages_interactions_guild_test.zig");
-const test_threads_invites_webhooks = @import("client_tests/threads_invites_webhooks_test.zig");
-const test_users_channels = @import("client_tests/users_channels_test.zig");
-const test_channels_roles = @import("client_tests/channels_roles_test.zig");
-const test_emoji_lobby_stickers = @import("client_tests/emoji_lobby_stickers_test.zig");
-const test_soundboard_commands = @import("client_tests/soundboard_commands_test.zig");
-const test_command_permissions_uploads = @import("client_tests/command_permissions_uploads_test.zig");
+const test_messages_interactions_guild = @import("client-tests/messages-test.zig");
+const test_threads_invites_webhooks = @import("client-tests/threads-test.zig");
+const test_users_channels = @import("client-tests/users-test.zig");
+const test_channels_roles = @import("client-tests/channels-test.zig");
+const test_emoji_lobby_stickers = @import("client-tests/emoji-test.zig");
+const test_soundboard_commands = @import("client-tests/soundboard-test.zig");
+const test_command_permissions_uploads = @import("client-tests/permissions-test.zig");
 
 pub const Header = struct {
     name: []const u8,
@@ -80,10 +80,10 @@ pub const Client = struct {
     transport: Transport,
     rate_limits: std.StringHashMap(RateLimitState),
 
-    const application_guild_methods = @import("client_methods/application_guild.zig").Methods(@This());
-    const guild_assets_members_methods = @import("client_methods/guild_assets_members.zig").Methods(@This());
-    const messages_threads_commands_methods = @import("client_methods/messages_threads_commands.zig").Methods(@This());
-    const commands_interactions_request_methods = @import("client_methods/commands_interactions_request.zig").Methods(@This());
+    const application_guild_methods = @import("client-methods/application-guild.zig").Methods(@This());
+    const guild_assets_members_methods = @import("client-methods/guild-assets.zig").Methods(@This());
+    const messages_threads_commands_methods = @import("client-methods/message-commands.zig").Methods(@This());
+    const commands_interactions_request_methods = @import("client-methods/command-request.zig").Methods(@This());
     pub const init = application_guild_methods.init;
     pub const deinit = application_guild_methods.deinit;
     pub const createMessage = application_guild_methods.createMessage;

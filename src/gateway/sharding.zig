@@ -4,7 +4,7 @@ const Snowflake = @import("../core/snowflake.zig").Snowflake;
 
 /// Mirrors the `session_start_limit` object returned by the Discord
 /// `GET /gateway/bot` endpoint.
-const supervisor_ipc = @import("sharding/supervisor_ipc.zig");
+const supervisor_ipc = @import("sharding/supervisor-ipc.zig");
 const manager = @import("sharding/manager.zig");
 
 pub const SessionStartLimit = supervisor_ipc.SessionStartLimit;

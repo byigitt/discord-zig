@@ -2,14 +2,14 @@ const std = @import("std");
 const Snowflake = @import("../core/snowflake.zig").Snowflake;
 const Types = @import("../models/types.zig");
 
-const core_application_user = @import("routes/core_application_user.zig");
-const guilds_members = @import("routes/guilds_members.zig");
-const bans_messages_threads = @import("routes/bans_messages_threads.zig");
-const invites_webhooks_commands = @import("routes/invites_webhooks_commands.zig");
-const application_commands_interactions = @import("routes/application_commands_interactions.zig");
-const tests_threads_invites_guilds = @import("routes/tests_threads_invites_guilds.zig");
-const tests_events_stage_assets = @import("routes/tests_events_stage_assets.zig");
-const tests_commands_webhooks = @import("routes/tests_commands_webhooks.zig");
+const core_application_user = @import("routes/core-user.zig");
+const guilds_members = @import("routes/guild-members.zig");
+const bans_messages_threads = @import("routes/bans-messages.zig");
+const invites_webhooks_commands = @import("routes/webhook-invites.zig");
+const application_commands_interactions = @import("routes/app-commands.zig");
+const tests_threads_invites_guilds = @import("routes/thread-tests.zig");
+const tests_events_stage_assets = @import("routes/events-tests.zig");
+const tests_commands_webhooks = @import("routes/command-tests.zig");
 
 pub const Method = core_application_user.Method;
 pub const Route = core_application_user.Route;

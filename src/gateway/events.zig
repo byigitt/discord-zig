@@ -2,10 +2,10 @@ const std = @import("std");
 const Gateway = @import("protocol.zig");
 const Interactions = @import("../interactions/mod.zig");
 
-const raw_handler = @import("events/raw_handler.zig");
+const raw_handler = @import("events/raw-handler.zig");
 const dispatcher = @import("events/dispatcher.zig");
-const message_interaction_handlers = @import("events/message_interaction_handlers.zig");
-const runtime_resource_handlers = @import("events/runtime_resource_handlers.zig");
+const message_interaction_handlers = @import("events/message-handlers.zig");
+const runtime_resource_handlers = @import("events/runtime-handlers.zig");
 
 pub const RawHandler = raw_handler.RawHandler;
 pub const Dispatcher = dispatcher.Dispatcher;

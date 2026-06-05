@@ -36,10 +36,10 @@ pub fn build(b: *std.Build) void {
     test_step.dependOn(&run_tests.step);
 
     const simple_examples = [_]struct { name: []const u8, path: []const u8 }{
-        .{ .name = "ping_bot", .path = "examples/ping_bot.zig" },
-        .{ .name = "slash_bot", .path = "examples/slash_bot.zig" },
-        .{ .name = "echo_bot", .path = "examples/echo_bot.zig" },
-        .{ .name = "rich_message", .path = "examples/rich_message.zig" },
+        .{ .name = "ping_bot", .path = "examples/ping-bot.zig" },
+        .{ .name = "slash_bot", .path = "examples/slash-bot.zig" },
+        .{ .name = "echo_bot", .path = "examples/echo-bot.zig" },
+        .{ .name = "rich_message", .path = "examples/rich-message.zig" },
     };
     for (simple_examples) |example| {
         const module = b.createModule(.{
@@ -56,7 +56,7 @@ pub fn build(b: *std.Build) void {
     const e2e_options = b.addOptions();
     e2e_options.addOption([]const u8, "discord_token", discord_token);
     const e2e_module = b.createModule(.{
-        .root_source_file = b.path("examples/e2e_check.zig"),
+        .root_source_file = b.path("examples/e2e-check.zig"),
         .target = target,
         .optimize = optimize,
     });

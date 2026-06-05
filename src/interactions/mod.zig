@@ -2,14 +2,14 @@ const std = @import("std");
 const Snowflake = @import("../core/snowflake.zig").Snowflake;
 const Json = @import("../core/json.zig");
 
-const component_primitives = @import("mod/component_primitives.zig");
-const layout_and_command_values = @import("mod/layout_and_command_values.zig");
-const command_options_resolved_data = @import("mod/command_options_resolved_data.zig");
-const router_response_commands = @import("mod/router_response_commands.zig");
-const command_registry_parsing = @import("mod/command_registry_parsing.zig");
-const json_helpers_aliases = @import("mod/json_helpers_aliases.zig");
-const tests_router_registry = @import("mod/tests_router_registry.zig");
-const tests_validation_limits = @import("mod/tests_validation_limits.zig");
+const component_primitives = @import("mod/components.zig");
+const layout_and_command_values = @import("mod/layout-values.zig");
+const command_options_resolved_data = @import("mod/command-data.zig");
+const router_response_commands = @import("mod/router-response.zig");
+const command_registry_parsing = @import("mod/command-registry.zig");
+const json_helpers_aliases = @import("mod/json-aliases.zig");
+const tests_router_registry = @import("mod/router-tests.zig");
+const tests_validation_limits = @import("mod/validation-tests.zig");
 
 pub const InteractionType = component_primitives.InteractionType;
 pub const CallbackType = component_primitives.CallbackType;
