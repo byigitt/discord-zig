@@ -1318,8 +1318,11 @@ _ = try client.updateInteractionMessage(
 Message components and modal responses are built with the same streaming JSON model:
 
 ```zig
+const confirm_style = discord.Interactions.ButtonStyle.Success;
+const text_input_style_name = discord.Interactions.TextInputStyle.Short.discordJsName();
+const component_type = discord.Interactions.ComponentType.fromDiscordJsName("Button").?;
 const buttons = [_]discord.Interactions.Component{
-    .{ .button = discord.Interactions.Button.success("confirm", "Confirm") },
+    .{ .button = discord.Interactions.Button.primary("confirm", "Confirm").withStyle(confirm_style) },
     .{ .button = discord.Interactions.Button.danger("cancel", "Cancel") },
 };
 const rows = [_]discord.Interactions.Component{

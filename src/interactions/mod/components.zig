@@ -157,6 +157,72 @@ pub const ComponentType = enum(u8) {
     file = 13,
     separator = 14,
     container = 17,
+
+    pub const ActionRow: @This() = .action_row;
+    pub const Button: @This() = .button;
+    pub const StringSelect: @This() = .string_select;
+    pub const TextInput: @This() = .text_input;
+    pub const UserSelect: @This() = .user_select;
+    pub const RoleSelect: @This() = .role_select;
+    pub const MentionableSelect: @This() = .mentionable_select;
+    pub const ChannelSelect: @This() = .channel_select;
+    pub const Section: @This() = .section;
+    pub const TextDisplay: @This() = .text_display;
+    pub const Thumbnail: @This() = .thumbnail;
+    pub const MediaGallery: @This() = .media_gallery;
+    pub const File: @This() = .file;
+    pub const Separator: @This() = .separator;
+    pub const Container: @This() = .container;
+
+    pub const ComponentTypeInfo = struct {
+        value: ComponentType,
+        name: []const u8,
+    };
+
+    pub const all_component_types = [_]ComponentTypeInfo{
+        .{ .value = ComponentType.ActionRow, .name = "ActionRow" },
+        .{ .value = ComponentType.Button, .name = "Button" },
+        .{ .value = ComponentType.StringSelect, .name = "StringSelect" },
+        .{ .value = ComponentType.TextInput, .name = "TextInput" },
+        .{ .value = ComponentType.UserSelect, .name = "UserSelect" },
+        .{ .value = ComponentType.RoleSelect, .name = "RoleSelect" },
+        .{ .value = ComponentType.MentionableSelect, .name = "MentionableSelect" },
+        .{ .value = ComponentType.ChannelSelect, .name = "ChannelSelect" },
+        .{ .value = ComponentType.Section, .name = "Section" },
+        .{ .value = ComponentType.TextDisplay, .name = "TextDisplay" },
+        .{ .value = ComponentType.Thumbnail, .name = "Thumbnail" },
+        .{ .value = ComponentType.MediaGallery, .name = "MediaGallery" },
+        .{ .value = ComponentType.File, .name = "File" },
+        .{ .value = ComponentType.Separator, .name = "Separator" },
+        .{ .value = ComponentType.Container, .name = "Container" },
+    };
+
+    pub fn discordJsName(self: ComponentType) []const u8 {
+        return switch (self) {
+            .action_row => "ActionRow",
+            .button => "Button",
+            .string_select => "StringSelect",
+            .text_input => "TextInput",
+            .user_select => "UserSelect",
+            .role_select => "RoleSelect",
+            .mentionable_select => "MentionableSelect",
+            .channel_select => "ChannelSelect",
+            .section => "Section",
+            .text_display => "TextDisplay",
+            .thumbnail => "Thumbnail",
+            .media_gallery => "MediaGallery",
+            .file => "File",
+            .separator => "Separator",
+            .container => "Container",
+        };
+    }
+
+    pub fn fromDiscordJsName(name: []const u8) ?ComponentType {
+        for (all_component_types) |component_type| {
+            if (std.mem.eql(u8, component_type.name, name)) return component_type.value;
+        }
+        return null;
+    }
 };
 
 pub const ButtonStyle = enum(u8) {
@@ -166,11 +232,77 @@ pub const ButtonStyle = enum(u8) {
     danger = 4,
     link = 5,
     premium = 6,
+
+    pub const Primary: @This() = .primary;
+    pub const Secondary: @This() = .secondary;
+    pub const Success: @This() = .success;
+    pub const Danger: @This() = .danger;
+    pub const Link: @This() = .link;
+    pub const Premium: @This() = .premium;
+
+    pub const ButtonStyleInfo = struct {
+        value: ButtonStyle,
+        name: []const u8,
+    };
+
+    pub const all_button_styles = [_]ButtonStyleInfo{
+        .{ .value = Primary, .name = "Primary" },
+        .{ .value = Secondary, .name = "Secondary" },
+        .{ .value = Success, .name = "Success" },
+        .{ .value = Danger, .name = "Danger" },
+        .{ .value = Link, .name = "Link" },
+        .{ .value = Premium, .name = "Premium" },
+    };
+
+    pub fn discordJsName(self: ButtonStyle) []const u8 {
+        return switch (self) {
+            .primary => "Primary",
+            .secondary => "Secondary",
+            .success => "Success",
+            .danger => "Danger",
+            .link => "Link",
+            .premium => "Premium",
+        };
+    }
+
+    pub fn fromDiscordJsName(name: []const u8) ?ButtonStyle {
+        for (all_button_styles) |style| {
+            if (std.mem.eql(u8, style.name, name)) return style.value;
+        }
+        return null;
+    }
 };
 
 pub const TextInputStyle = enum(u8) {
     short = 1,
     paragraph = 2,
+
+    pub const Short: @This() = .short;
+    pub const Paragraph: @This() = .paragraph;
+
+    pub const TextInputStyleInfo = struct {
+        value: TextInputStyle,
+        name: []const u8,
+    };
+
+    pub const all_text_input_styles = [_]TextInputStyleInfo{
+        .{ .value = Short, .name = "Short" },
+        .{ .value = Paragraph, .name = "Paragraph" },
+    };
+
+    pub fn discordJsName(self: TextInputStyle) []const u8 {
+        return switch (self) {
+            .short => "Short",
+            .paragraph => "Paragraph",
+        };
+    }
+
+    pub fn fromDiscordJsName(name: []const u8) ?TextInputStyle {
+        for (all_text_input_styles) |style| {
+            if (std.mem.eql(u8, style.name, name)) return style.value;
+        }
+        return null;
+    }
 };
 
 pub const ApplicationCommandType = enum(u8) {
@@ -709,3 +841,31 @@ pub const AutoSelect = struct {
         try writer.writeByte('}');
     }
 };
+
+test "Discord.js component enum aliases map to protocol values" {
+    try std.testing.expectEqual(ComponentType.action_row, ComponentType.ActionRow);
+    try std.testing.expectEqual(ComponentType.button, ComponentType.Button);
+    try std.testing.expectEqual(ComponentType.string_select, ComponentType.StringSelect);
+    try std.testing.expectEqual(ComponentType.text_input, ComponentType.TextInput);
+    try std.testing.expectEqual(ComponentType.container, ComponentType.Container);
+    try std.testing.expectEqual(@as(u8, 17), @intFromEnum(ComponentType.Container));
+    try std.testing.expectEqualStrings("ActionRow", ComponentType.ActionRow.discordJsName());
+    try std.testing.expectEqualStrings("TextDisplay", ComponentType.TextDisplay.discordJsName());
+    try std.testing.expectEqual(ComponentType.text_display, ComponentType.fromDiscordJsName("TextDisplay").?);
+    try std.testing.expectEqual(ComponentType.media_gallery, ComponentType.fromDiscordJsName("MediaGallery").?);
+    try std.testing.expectEqual(@as(?ComponentType, null), ComponentType.fromDiscordJsName("Unknown"));
+
+    try std.testing.expectEqual(ButtonStyle.primary, ButtonStyle.Primary);
+    try std.testing.expectEqual(ButtonStyle.success, ButtonStyle.Success);
+    try std.testing.expectEqual(ButtonStyle.premium, ButtonStyle.Premium);
+    try std.testing.expectEqual(@as(u8, 6), @intFromEnum(ButtonStyle.Premium));
+    try std.testing.expectEqualStrings("Success", ButtonStyle.Success.discordJsName());
+    try std.testing.expectEqual(ButtonStyle.danger, ButtonStyle.fromDiscordJsName("Danger").?);
+    try std.testing.expectEqual(@as(?ButtonStyle, null), ButtonStyle.fromDiscordJsName("Warning"));
+
+    try std.testing.expectEqual(TextInputStyle.short, TextInputStyle.Short);
+    try std.testing.expectEqual(TextInputStyle.paragraph, TextInputStyle.Paragraph);
+    try std.testing.expectEqualStrings("Paragraph", TextInputStyle.Paragraph.discordJsName());
+    try std.testing.expectEqual(TextInputStyle.short, TextInputStyle.fromDiscordJsName("Short").?);
+    try std.testing.expectEqual(@as(?TextInputStyle, null), TextInputStyle.fromDiscordJsName("Long"));
+}
