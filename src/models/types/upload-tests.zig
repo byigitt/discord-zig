@@ -501,10 +501,14 @@ test "execute webhook thread name and query options" {
 
 test "channel type guards classify channels like Discord.js" {
     try std.testing.expect(ChannelType.public_thread.isThread());
+    try std.testing.expect(ChannelType.PublicThread.isThread());
     try std.testing.expect(!ChannelType.guild_text.isThread());
+    try std.testing.expect(!ChannelType.GuildText.isThread());
 
     try std.testing.expect(ChannelType.guild_voice.isVoiceBased());
     try std.testing.expect(ChannelType.guild_stage_voice.isVoiceBased());
+    try std.testing.expect(ChannelType.GuildVoice.isVoiceBased());
+    try std.testing.expect(ChannelType.GuildStageVoice.isVoiceBased());
     try std.testing.expect(!ChannelType.guild_text.isVoiceBased());
 
     // Voice channels and threads are text-based; categories/forums are not.
@@ -524,6 +528,15 @@ test "channel type guards classify channels like Discord.js" {
 
     try std.testing.expect(ChannelType.guild_text.isGuildBased());
     try std.testing.expect(!ChannelType.dm.isGuildBased());
+
+    try std.testing.expectEqual(@as(u8, 0), @intFromEnum(ChannelType.GuildText));
+    try std.testing.expectEqual(@as(u8, 13), @intFromEnum(ChannelType.GuildStageVoice));
+    try std.testing.expectEqual(@as(u8, 16), @intFromEnum(ChannelType.GuildMedia));
+    try std.testing.expectEqualStrings("GuildText", ChannelType.GuildText.discordJsName());
+    try std.testing.expectEqualStrings("GuildForum", ChannelType.GuildForum.discordJsName());
+    try std.testing.expectEqual(ChannelType.guild_text, ChannelType.fromDiscordJsName("GuildText").?);
+    try std.testing.expectEqual(ChannelType.guild_media, ChannelType.fromDiscordJsName("GuildMedia").?);
+    try std.testing.expectEqual(@as(?ChannelType, null), ChannelType.fromDiscordJsName("GuildNews"));
 }
 
 test "embed color uses Discord color palette" {

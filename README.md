@@ -8,7 +8,7 @@ The current focus is a fast, dependency-light core:
 
 - Discord API v10 routes and payload types
 - `Snowflake` parsing, formatting, and timestamp helpers
-- Current `GatewayIntentBits`, `Events`, `Partials`, `PermissionBits`, and `Colors` helpers with Discord.js-compatible aliases
+- Current `GatewayIntentBits`, `Events`, `Partials`, `PermissionBits`, `ChannelType`, and `Colors` helpers with Discord.js-compatible aliases
 - Mention scanner for user, role, channel, everyone, and here mentions
 - Discord message, channel, and invite link parsers plus OAuth2 authorization URL builder
 - Discord CDN asset URL builders with explicit hash and cached model helpers
@@ -133,6 +133,9 @@ var mentions = try discord.Mentions.parse(allocator, "hi <@123> <#456>");
 defer mentions.deinit();
 
 _ = try discord.Mentions.scan("hi <@123> <#456>", discord.Mentions.handler(&state, State.onMention));
+const guild_text_channel = discord.Types.ChannelType.GuildText;
+const channel_type_name = guild_text_channel.discordJsName();
+const channel_type = discord.Types.ChannelType.fromDiscordJsName("GuildVoice").?;
 const user_mention = try discord.Mentions.userMention(allocator, user_id);
 defer allocator.free(user_mention);
 const role_mention = try discord.Mentions.roleMention(allocator, role_id);

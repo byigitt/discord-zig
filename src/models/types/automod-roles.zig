@@ -682,6 +682,66 @@ pub const ChannelType = enum(u8) {
     guild_forum = 15,
     guild_media = 16,
 
+    pub const GuildText: @This() = .guild_text;
+    pub const DM: @This() = .dm;
+    pub const GuildVoice: @This() = .guild_voice;
+    pub const GroupDM: @This() = .group_dm;
+    pub const GuildCategory: @This() = .guild_category;
+    pub const GuildAnnouncement: @This() = .guild_announcement;
+    pub const AnnouncementThread: @This() = .announcement_thread;
+    pub const PublicThread: @This() = .public_thread;
+    pub const PrivateThread: @This() = .private_thread;
+    pub const GuildStageVoice: @This() = .guild_stage_voice;
+    pub const GuildDirectory: @This() = .guild_directory;
+    pub const GuildForum: @This() = .guild_forum;
+    pub const GuildMedia: @This() = .guild_media;
+
+    pub const ChannelTypeInfo = struct {
+        value: ChannelType,
+        name: []const u8,
+    };
+
+    pub const all_channel_types = [_]ChannelTypeInfo{
+        .{ .value = GuildText, .name = "GuildText" },
+        .{ .value = DM, .name = "DM" },
+        .{ .value = GuildVoice, .name = "GuildVoice" },
+        .{ .value = GroupDM, .name = "GroupDM" },
+        .{ .value = GuildCategory, .name = "GuildCategory" },
+        .{ .value = GuildAnnouncement, .name = "GuildAnnouncement" },
+        .{ .value = AnnouncementThread, .name = "AnnouncementThread" },
+        .{ .value = PublicThread, .name = "PublicThread" },
+        .{ .value = PrivateThread, .name = "PrivateThread" },
+        .{ .value = GuildStageVoice, .name = "GuildStageVoice" },
+        .{ .value = GuildDirectory, .name = "GuildDirectory" },
+        .{ .value = GuildForum, .name = "GuildForum" },
+        .{ .value = GuildMedia, .name = "GuildMedia" },
+    };
+
+    pub fn discordJsName(self: ChannelType) []const u8 {
+        return switch (self) {
+            .guild_text => "GuildText",
+            .dm => "DM",
+            .guild_voice => "GuildVoice",
+            .group_dm => "GroupDM",
+            .guild_category => "GuildCategory",
+            .guild_announcement => "GuildAnnouncement",
+            .announcement_thread => "AnnouncementThread",
+            .public_thread => "PublicThread",
+            .private_thread => "PrivateThread",
+            .guild_stage_voice => "GuildStageVoice",
+            .guild_directory => "GuildDirectory",
+            .guild_forum => "GuildForum",
+            .guild_media => "GuildMedia",
+        };
+    }
+
+    pub fn fromDiscordJsName(name: []const u8) ?ChannelType {
+        for (all_channel_types) |channel_type| {
+            if (std.mem.eql(u8, channel_type.name, name)) return channel_type.value;
+        }
+        return null;
+    }
+
     /// Whether this is a thread channel (announcement/public/private thread).
     pub fn isThread(self: ChannelType) bool {
         return switch (self) {
