@@ -8,7 +8,7 @@ The current focus is a fast, dependency-light core:
 
 - Discord API v10 routes and payload types
 - `Snowflake` parsing, formatting, and timestamp helpers
-- Current `GatewayIntentBits`, `Partials`, and `PermissionBits` helpers with Discord.js-compatible aliases
+- Current `GatewayIntentBits`, `Events`, `Partials`, and `PermissionBits` helpers with Discord.js-compatible aliases
 - Mention scanner for user, role, channel, everyone, and here mentions
 - Discord message, channel, and invite link parsers plus OAuth2 authorization URL builder
 - Discord CDN asset URL builders with explicit hash and cached model helpers
@@ -701,6 +701,10 @@ client.onceGuildMemberAdd(discord.Events.rawHandler(&state, State.onGuildMemberA
 client.onceChannelCreate(discord.Events.rawHandler(&state, State.onChannelCreate));
 client.on(.MESSAGE_CREATE, discord.Events.rawHandler(&state, State.onMessage));
 client.once(.READY, discord.Events.rawHandler(&state, State.onReady));
+client.on(discord.Events.MessageCreate, discord.Events.rawHandler(&state, State.onMessage));
+client.once(discord.Events.ClientReady, discord.Events.rawHandler(&state, State.onReady));
+const event_name = discord.Events.discordJsName(discord.Events.MessageBulkDelete).?;
+const event = discord.Events.fromDiscordJsName("messageDeleteBulk").?;
 const message_listener_count = client.listenerCount(.MESSAGE_CREATE);
 const has_ready_listener = client.hasListener(.READY);
 const active_events = try client.eventNames(allocator);
