@@ -51,7 +51,13 @@ pub fn reactionArrayFromJson(allocator: std.mem.Allocator, value: std.json.Value
         deinitParsedReactionFields(reactions.items, allocator);
         reactions.deinit();
     }
-    for (array.items) |item| try reactions.append(try reactionFromJson(allocator, item));
+    for (array.items) |item| {
+        const reaction = try reactionFromJson(allocator, item);
+        var appended = false;
+        errdefer if (!appended) allocator.free(reaction.burst_colors);
+        try reactions.append(reaction);
+        appended = true;
+    }
     return reactions.toOwnedSlice();
 }
 

@@ -61,7 +61,16 @@ pub fn componentArrayFromJson(allocator: std.mem.Allocator, value: std.json.Valu
     }
 
     for (array.items) |item| {
-        if (try componentFromJson(allocator, item)) |component| try components.append(component);
+        if (try componentFromJson(allocator, item)) |component| {
+            const owned_component = component;
+            var appended = false;
+            errdefer if (!appended) {
+                var single = [_]Interactions.Component{owned_component};
+                deinitParsedComponents(&single, allocator);
+            };
+            try components.append(owned_component);
+            appended = true;
+        }
     }
     return components.toOwnedSlice();
 }

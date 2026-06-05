@@ -390,7 +390,13 @@ pub fn channelArrayFromJson(allocator: std.mem.Allocator, value: std.json.Value,
         for (channels.items) |channel| deinitParsedChannel(channel, allocator);
         channels.deinit();
     }
-    for (array.items) |item| try channels.append(try channelFromJson(allocator, item, fallback_guild_id));
+    for (array.items) |item| {
+        const channel = try channelFromJson(allocator, item, fallback_guild_id);
+        var appended = false;
+        errdefer if (!appended) deinitParsedChannel(channel, allocator);
+        try channels.append(channel);
+        appended = true;
+    }
     return channels.toOwnedSlice();
 }
 
