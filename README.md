@@ -61,7 +61,7 @@ The public module root stays at `src/discord.zig`. It re-exports the stable API 
 - `src/client/`: high-level client orchestration and cache state
 - `src/voice/`: voice gateway, audio resource, player, receive, and codec adapter helpers
 
-Implementation files are kept below 1000 lines. Larger domains use small aggregator files plus `part_XX.zig`, `*_methods`, and `*_tests` submodules so contributors can work inside focused slices without changing the public `discord.zig` entrypoint.
+Implementation files are kept below 1000 lines. Larger domains use small aggregator files plus named submodules such as `message_details_polls.zig`, `application_commands_interactions.zig`, `lifecycle_events.zig`, and `cache_state_test.zig` so contributors can open a file by responsibility without changing the public `discord.zig` entrypoint.
 
 ## Example
 

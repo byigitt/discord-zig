@@ -6,14 +6,6 @@ const Interactions = @import("../../interactions/mod.zig");
 const Permissions = @import("../../core/permissions.zig");
 const Collection = @import("../../core/collection.zig").Collection;
 
-const test_part_01 = @import("../cache_tests/part_01.zig");
-const test_part_02 = @import("../cache_tests/part_02.zig");
-const test_part_03 = @import("../cache_tests/part_03.zig");
-const test_part_04 = @import("../cache_tests/part_04.zig");
-const test_part_05 = @import("../cache_tests/part_05.zig");
-const test_part_06 = @import("../cache_tests/part_06.zig");
-const test_part_07 = @import("../cache_tests/part_07.zig");
-
 const Root = @import("../cache.zig");
 const deinit = Root.deinit;
 const copyUser = Root.copyUser;

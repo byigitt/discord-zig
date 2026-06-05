@@ -21,7 +21,7 @@ const GatewayRunner = Root.GatewayRunner;
 const noTransportValue = Root.noTransportValue;
 const noTransportSend = Root.noTransportSend;
 
-test "client convenience send reply and react delegate to REST part 7" {
+test "client command and upload conveniences hit REST routes" {
     var memory = Rest.MemoryTransport.init(std.testing.allocator, .{
         .status = 200,
         .body = "{}",

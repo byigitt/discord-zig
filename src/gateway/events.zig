@@ -2,12 +2,12 @@ const std = @import("std");
 const Gateway = @import("protocol.zig");
 const Interactions = @import("../interactions/mod.zig");
 
-const part_01 = @import("events/part_01.zig");
-const part_02 = @import("events/part_02.zig");
-const part_03 = @import("events/part_03.zig");
-const part_04 = @import("events/part_04.zig");
+const raw_handler = @import("events/raw_handler.zig");
+const dispatcher = @import("events/dispatcher.zig");
+const message_interaction_handlers = @import("events/message_interaction_handlers.zig");
+const runtime_resource_handlers = @import("events/runtime_resource_handlers.zig");
 
-pub const RawHandler = part_01.RawHandler;
-pub const Dispatcher = part_02.Dispatcher;
-pub const interactionType = part_03.interactionType;
-pub const rawHandler = part_03.rawHandler;
+pub const RawHandler = raw_handler.RawHandler;
+pub const Dispatcher = dispatcher.Dispatcher;
+pub const interactionType = message_interaction_handlers.interactionType;
+pub const rawHandler = message_interaction_handlers.rawHandler;

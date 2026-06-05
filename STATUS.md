@@ -25,7 +25,7 @@ The library is a practical replacement for basic to moderately complex Discord.j
 
 ## Source layout
 
-`src/discord.zig` remains the public module root and compatibility export surface. Implementation code is organized by domain under `src/core`, `src/models`, `src/rest`, `src/gateway`, `src/interactions`, `src/client`, and `src/voice` so contributors can navigate to the subsystem they are changing without scanning a flat source directory. Each Zig source file is kept below 1000 lines; large domains are split into focused parts, method mixins, and test parts.
+`src/discord.zig` remains the public module root and compatibility export surface. Implementation code is organized by domain under `src/core`, `src/models`, `src/rest`, `src/gateway`, `src/interactions`, `src/client`, and `src/voice` so contributors can navigate to the subsystem they are changing without scanning a flat source directory. Each Zig source file is kept below 1000 lines; large domains are split into named submodules, method mixins, and test modules whose filenames describe the behavior they contain.
 
 ## Validation commands
 
