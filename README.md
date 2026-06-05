@@ -8,7 +8,7 @@ The current focus is a fast, dependency-light core:
 
 - Discord API v10 routes and payload types
 - `Snowflake` parsing, formatting, and timestamp helpers
-- Current `GatewayIntentBits` helpers with Discord.js-compatible aliases and current `PermissionBits`
+- Current `GatewayIntentBits`, `Partials`, and `PermissionBits` helpers with Discord.js-compatible aliases
 - Mention scanner for user, role, channel, everyone, and here mentions
 - Discord message, channel, and invite link parsers plus OAuth2 authorization URL builder
 - Discord CDN asset URL builders with explicit hash and cached model helpers

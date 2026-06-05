@@ -1,5 +1,6 @@
 const std = @import("std");
 const Intents = @import("../../core/intents.zig");
+const Partials = @import("../../core/partials.zig");
 const Rest = @import("../../rest/client.zig");
 const HttpTransport = @import("../../rest/http-transport.zig").HttpTransport;
 const Events = @import("../../gateway/events.zig");
@@ -28,6 +29,7 @@ pub fn Methods(comptime Client: type) type {
                 .allocator = allocator,
                 .token = options.token,
                 .intents = options.intents,
+                .partials = options.partials,
                 .presence = options.presence,
                 .rest = Rest.Client.init(allocator, options.token, transport),
                 .cache = Cache.initWithPolicy(allocator, options.cache_policy),
@@ -50,11 +52,20 @@ pub fn Methods(comptime Client: type) type {
                 .allocator = allocator,
                 .token = options.token,
                 .intents = options.intents,
+                .partials = options.partials,
                 .presence = options.presence,
                 .rest = Rest.Client.init(allocator, options.token, transport),
                 .cache = Cache.initWithPolicy(allocator, options.cache_policy),
                 .owned_http_transport = owned_http_transport,
             };
+        }
+
+        pub fn hasPartial(self: Client, partial: Partials.Bit) bool {
+            return Partials.has(self.partials, partial);
+        }
+
+        pub fn hasPartials(self: Client, partials: Partials.Bit) bool {
+            return Partials.hasAll(self.partials, partials);
         }
 
         pub fn dispatchGatewayPayload(self: *Client, payload: []const u8) !bool {

@@ -8,6 +8,7 @@ pub const gateway_encoding = Api.gateway_encoding;
 pub const Assets = @import("core/assets.zig");
 pub const Snowflake = @import("core/snowflake.zig").Snowflake;
 pub const Intents = @import("core/intents.zig");
+pub const Partials = @import("core/partials.zig");
 pub const Permissions = @import("core/permissions.zig");
 pub const Json = @import("core/json.zig");
 pub const Mentions = @import("core/mentions.zig");

@@ -1,5 +1,6 @@
 const std = @import("std");
 const Intents = @import("../../core/intents.zig");
+const Partials = @import("../../core/partials.zig");
 const Rest = @import("../../rest/client.zig");
 const HttpTransport = @import("../../rest/http-transport.zig").HttpTransport;
 const Events = @import("../../gateway/events.zig");
@@ -20,6 +21,25 @@ const ReconnectBackoff = Root.ReconnectBackoff;
 const GatewayRunner = Root.GatewayRunner;
 const noTransportValue = Root.noTransportValue;
 const noTransportSend = Root.noTransportSend;
+
+test "client stores Discord.js-style partial options" {
+    var default_client = Client.init(std.testing.allocator, .{ .token = "Bot test" });
+    defer default_client.deinit();
+    try std.testing.expectEqual(Partials.none, default_client.partials);
+    try std.testing.expect(!default_client.hasPartial(Partials.Message));
+
+    var client = Client.init(std.testing.allocator, .{
+        .token = "Bot test",
+        .partials = Partials.Message | Partials.Channel | Partials.GuildMember | Partials.PollAnswer,
+    });
+    defer client.deinit();
+
+    try std.testing.expect(client.hasPartial(Partials.message));
+    try std.testing.expect(client.hasPartial(Partials.Channel));
+    try std.testing.expect(client.hasPartials(Partials.Message | Partials.GuildMember));
+    try std.testing.expect(!client.hasPartial(Partials.SoundboardSound));
+    try std.testing.expectEqual(Partials.soundboard_sound, Partials.missing(client.partials, Partials.SoundboardSound | Partials.Message));
+}
 
 test "client exposes current cached user from gateway ready" {
     var client = Client.init(std.testing.allocator, .{ .token = "Bot test" });

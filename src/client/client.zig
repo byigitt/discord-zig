@@ -1,5 +1,6 @@
 const std = @import("std");
 const Intents = @import("../core/intents.zig");
+const Partials = @import("../core/partials.zig");
 const Rest = @import("../rest/client.zig");
 const HttpTransport = @import("../rest/http-transport.zig").HttpTransport;
 const Events = @import("../gateway/events.zig");
@@ -23,6 +24,7 @@ const Snowflake = @import("../core/snowflake.zig").Snowflake;
 pub const ClientOptions = struct {
     token: []const u8,
     intents: Intents.Bit = Intents.defaultNonPrivileged(),
+    partials: Partials.Bit = Partials.none,
     presence: ?Gateway.Presence = null,
     transport: ?Rest.Transport = null,
     cache_policy: CacheModule.CachePolicy = .default(),
@@ -68,6 +70,7 @@ pub const Client = struct {
     allocator: std.mem.Allocator,
     token: []const u8,
     intents: Intents.Bit,
+    partials: Partials.Bit,
     presence: ?Gateway.Presence,
     rest: Rest.Client,
     events: Events.Dispatcher = .{},
@@ -90,6 +93,8 @@ pub const Client = struct {
     const cache_management_methods = @import("client-methods/cache-management.zig").Methods(@This());
     pub const init = lifecycle_events_methods.init;
     pub const initHttp = lifecycle_events_methods.initHttp;
+    pub const hasPartial = lifecycle_events_methods.hasPartial;
+    pub const hasPartials = lifecycle_events_methods.hasPartials;
     pub const dispatchGatewayPayload = lifecycle_events_methods.dispatchGatewayPayload;
     pub const isReady = lifecycle_events_methods.isReady;
     pub const readyTimestampMs = lifecycle_events_methods.readyTimestampMs;
