@@ -528,11 +528,17 @@ test "channel type guards classify channels like Discord.js" {
 
 test "embed color uses Discord color palette" {
     try std.testing.expectEqual(@as(u24, 0x5865F2), Colors.blurple);
+    try std.testing.expectEqual(@as(u24, 0x5865F2), Colors.Blurple);
     try std.testing.expectEqual(@as(u24, 0xED4245), Colors.red);
+    try std.testing.expectEqual(@as(u24, 0xED4245), Colors.Red);
+    try std.testing.expectEqual(@as(u24, 0x2C2F33), Colors.DarkButNotBlack);
+    try std.testing.expectEqualStrings("Blurple", Colors.discordJsName(Colors.Blurple).?);
+    try std.testing.expectEqual(Colors.Yellow, Colors.fromDiscordJsName("Yellow").?);
+    try std.testing.expectEqual(@as(?u24, null), Colors.fromDiscordJsName("Random"));
 
     var out = std.Io.Writer.Allocating.init(std.testing.allocator);
     defer out.deinit();
-    try Embed.init().withColor(Colors.blurple).writeJson(&out.writer);
+    try Embed.init().withColor(Colors.Blurple).writeJson(&out.writer);
     try std.testing.expectEqualStrings("{\"color\":5793266}", out.written());
 }
 

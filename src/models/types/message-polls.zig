@@ -551,6 +551,89 @@ pub const Colors = struct {
     pub const greyple: u24 = 0x99AAB5;
     pub const dark_but_not_black: u24 = 0x2C2F33;
     pub const not_quite_black: u24 = 0x23272A;
+
+    pub const Default = default;
+    pub const White = white;
+    pub const Aqua = aqua;
+    pub const Green = green;
+    pub const Blue = blue;
+    pub const Yellow = yellow;
+    pub const Purple = purple;
+    pub const LuminousVividPink = luminous_vivid_pink;
+    pub const Fuchsia = fuchsia;
+    pub const Gold = gold;
+    pub const Orange = orange;
+    pub const Red = red;
+    pub const Grey = grey;
+    pub const Navy = navy;
+    pub const DarkAqua = dark_aqua;
+    pub const DarkGreen = dark_green;
+    pub const DarkBlue = dark_blue;
+    pub const DarkPurple = dark_purple;
+    pub const DarkVividPink = dark_vivid_pink;
+    pub const DarkGold = dark_gold;
+    pub const DarkOrange = dark_orange;
+    pub const DarkRed = dark_red;
+    pub const DarkGrey = dark_grey;
+    pub const DarkerGrey = darker_grey;
+    pub const LightGrey = light_grey;
+    pub const DarkNavy = dark_navy;
+    pub const Blurple = blurple;
+    pub const Greyple = greyple;
+    pub const DarkButNotBlack = dark_but_not_black;
+    pub const NotQuiteBlack = not_quite_black;
+
+    pub const ColorInfo = struct {
+        value: u24,
+        name: []const u8,
+    };
+
+    pub const all_colors = [_]ColorInfo{
+        .{ .value = Default, .name = "Default" },
+        .{ .value = White, .name = "White" },
+        .{ .value = Aqua, .name = "Aqua" },
+        .{ .value = Green, .name = "Green" },
+        .{ .value = Blue, .name = "Blue" },
+        .{ .value = Yellow, .name = "Yellow" },
+        .{ .value = Purple, .name = "Purple" },
+        .{ .value = LuminousVividPink, .name = "LuminousVividPink" },
+        .{ .value = Fuchsia, .name = "Fuchsia" },
+        .{ .value = Gold, .name = "Gold" },
+        .{ .value = Orange, .name = "Orange" },
+        .{ .value = Red, .name = "Red" },
+        .{ .value = Grey, .name = "Grey" },
+        .{ .value = Navy, .name = "Navy" },
+        .{ .value = DarkAqua, .name = "DarkAqua" },
+        .{ .value = DarkGreen, .name = "DarkGreen" },
+        .{ .value = DarkBlue, .name = "DarkBlue" },
+        .{ .value = DarkPurple, .name = "DarkPurple" },
+        .{ .value = DarkVividPink, .name = "DarkVividPink" },
+        .{ .value = DarkGold, .name = "DarkGold" },
+        .{ .value = DarkOrange, .name = "DarkOrange" },
+        .{ .value = DarkRed, .name = "DarkRed" },
+        .{ .value = DarkGrey, .name = "DarkGrey" },
+        .{ .value = DarkerGrey, .name = "DarkerGrey" },
+        .{ .value = LightGrey, .name = "LightGrey" },
+        .{ .value = DarkNavy, .name = "DarkNavy" },
+        .{ .value = Blurple, .name = "Blurple" },
+        .{ .value = Greyple, .name = "Greyple" },
+        .{ .value = DarkButNotBlack, .name = "DarkButNotBlack" },
+        .{ .value = NotQuiteBlack, .name = "NotQuiteBlack" },
+    };
+
+    pub fn discordJsName(value: u24) ?[]const u8 {
+        for (all_colors) |color| {
+            if (color.value == value) return color.name;
+        }
+        return null;
+    }
+
+    pub fn fromDiscordJsName(name: []const u8) ?u24 {
+        for (all_colors) |color| {
+            if (std.mem.eql(u8, color.name, name)) return color.value;
+        }
+        return null;
+    }
 };
 
 pub const Embed = struct {

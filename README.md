@@ -8,7 +8,7 @@ The current focus is a fast, dependency-light core:
 
 - Discord API v10 routes and payload types
 - `Snowflake` parsing, formatting, and timestamp helpers
-- Current `GatewayIntentBits`, `Events`, `Partials`, and `PermissionBits` helpers with Discord.js-compatible aliases
+- Current `GatewayIntentBits`, `Events`, `Partials`, `PermissionBits`, and `Colors` helpers with Discord.js-compatible aliases
 - Mention scanner for user, role, channel, everyone, and here mentions
 - Discord message, channel, and invite link parsers plus OAuth2 authorization URL builder
 - Discord CDN asset URL builders with explicit hash and cached model helpers
@@ -111,7 +111,7 @@ const embeds = [_]discord.Types.Embed{
     discord.Types.Embed.init()
         .withTitle("discord.zig")
         .withDescription("Fast bot core")
-        .withColor(0x5865F2)
+        .withColor(discord.Colors.Blurple)
         .withFields(&fields),
     discord.Types.Embed.init()
         .withTitle("Status")
