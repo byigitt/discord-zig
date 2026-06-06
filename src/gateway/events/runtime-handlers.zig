@@ -3,9 +3,7 @@ const Gateway = @import("../protocol.zig");
 const Interactions = @import("../../interactions/mod.zig");
 
 const Root = @import("../events.zig");
-const RawHandler = Root.RawHandler;
 const Dispatcher = Root.Dispatcher;
-const interactionType = Root.interactionType;
 const rawHandler = Root.rawHandler;
 
 test "dispatcher routes common message guild member and channel events" {

@@ -10,16 +10,10 @@ const Interactions = @import("../../interactions/mod.zig");
 const Types = @import("../../models/types.zig");
 const Snowflake = @import("../../core/snowflake.zig").Snowflake;
 const Root = @import("../client.zig");
-const Cache = Root.Cache;
-const ClientOptions = Root.ClientOptions;
 const SetActivityOptions = Root.SetActivityOptions;
 const Client = Root.Client;
 const GatewayStep = Root.GatewayStep;
 const GatewayStartMode = Root.GatewayStartMode;
-const ReconnectBackoff = Root.ReconnectBackoff;
-const GatewayRunner = Root.GatewayRunner;
-const noTransportValue = Root.noTransportValue;
-const noTransportSend = Root.noTransportSend;
 
 test "client initHttp owns live REST transport" {
     var client = try Client.initHttp(std.testing.allocator, .{

@@ -6,24 +6,9 @@ const Interactions = @import("../../interactions/mod.zig");
 const Snowflake = @import("../../core/snowflake.zig").Snowflake;
 
 const Root = @import("../client.zig");
-const Header = Root.Header;
-const Request = Root.Request;
-const BodyStream = Root.BodyStream;
 const Response = Root.Response;
 const Transport = Root.Transport;
 const RateLimitState = Root.RateLimitState;
-const MultipartFilePathStream = Root.MultipartFilePathStream;
-const writeMessageMultipart = Root.writeMessageMultipart;
-const writeExecuteWebhookMultipart = Root.writeExecuteWebhookMultipart;
-const writeGuildStickerMultipart = Root.writeGuildStickerMultipart;
-const writeInviteTargetUsersMultipart = Root.writeInviteTargetUsersMultipart;
-const writeMessageMultipartFilePaths = Root.writeMessageMultipartFilePaths;
-const writeMessageMultipartFilePathMetadata = Root.writeMessageMultipartFilePathMetadata;
-const writeMultipartPayloadJson = Root.writeMultipartPayloadJson;
-const writeMultipartTextField = Root.writeMultipartTextField;
-const writeMultipartFileHeader = Root.writeMultipartFileHeader;
-const writeMultipartQuoted = Root.writeMultipartQuoted;
-const MemoryTransport = Root.MemoryTransport;
 
 pub fn Methods(comptime Client: type) type {
     return struct {

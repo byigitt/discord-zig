@@ -5,10 +5,7 @@ const Snowflake = @import("../../core/snowflake.zig").Snowflake;
 /// Mirrors the `session_start_limit` object returned by the Discord
 /// `GET /gateway/bot` endpoint.
 const Root = @import("../sharding.zig");
-const SessionStartLimit = Root.SessionStartLimit;
 const GatewayBotInfo = Root.GatewayBotInfo;
-const readU32 = Root.readU32;
-const readU64 = Root.readU64;
 const ShardState = Root.ShardState;
 const ShardInfo = Root.ShardInfo;
 const IdentifyGroup = Root.IdentifyGroup;
@@ -20,25 +17,16 @@ const ShardClusterPlanOptions = Root.ShardClusterPlanOptions;
 const ShardProcessOptions = Root.ShardProcessOptions;
 const ShardProcessSpec = Root.ShardProcessSpec;
 const buildShardProcessSpec = Root.buildShardProcessSpec;
-const duplicateProcessArgv = Root.duplicateProcessArgv;
-const shardListEnvValue = Root.shardListEnvValue;
 const buildShardClusterProcessSpec = Root.buildShardClusterProcessSpec;
 const deinitShardProcessSpecs = Root.deinitShardProcessSpecs;
 const ShardRestartPolicy = Root.ShardRestartPolicy;
-const ShardExitAction = Root.ShardExitAction;
-const ShardSupervisorOptions = Root.ShardSupervisorOptions;
 const shouldRestartShard = Root.shouldRestartShard;
-const canRestartShard = Root.canRestartShard;
 const ShardIpcMessageKind = Root.ShardIpcMessageKind;
 const ShardIpcMessage = Root.ShardIpcMessage;
-const writeJsonString = Root.writeJsonString;
-const ShardIpcBroadcast = Root.ShardIpcBroadcast;
-const ShardIpcHandler = Root.ShardIpcHandler;
 const shardIpcHandler = Root.shardIpcHandler;
 const ShardIpcRoute = Root.ShardIpcRoute;
 const ShardIpcRouter = Root.ShardIpcRouter;
 const ShardSupervisor = Root.ShardSupervisor;
-const putSpecEnv = Root.putSpecEnv;
 
 pub const ShardManager = struct {
     allocator: std.mem.Allocator,

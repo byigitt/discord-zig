@@ -3,9 +3,6 @@ const Gateway = @import("../protocol.zig");
 const Interactions = @import("../../interactions/mod.zig");
 
 const Root = @import("../events.zig");
-const Dispatcher = Root.Dispatcher;
-const interactionType = Root.interactionType;
-const rawHandler = Root.rawHandler;
 
 pub const RawHandler = struct {
     ptr: *anyopaque,

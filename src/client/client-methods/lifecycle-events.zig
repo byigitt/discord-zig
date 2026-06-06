@@ -14,12 +14,8 @@ const Snowflake = @import("../../core/snowflake.zig").Snowflake;
 const Root = @import("../client.zig");
 const ClientOptions = Root.ClientOptions;
 const SetActivityOptions = Root.SetActivityOptions;
-const GatewayStep = Root.GatewayStep;
-const GatewayStartMode = Root.GatewayStartMode;
-const ReconnectBackoff = Root.ReconnectBackoff;
 const GatewayRunner = Root.GatewayRunner;
 const noTransportValue = Root.noTransportValue;
-const noTransportSend = Root.noTransportSend;
 
 pub fn Methods(comptime Client: type) type {
     return struct {

@@ -5,7 +5,6 @@ const Interactions = @import("../../interactions/mod.zig");
 const Root = @import("../events.zig");
 const RawHandler = Root.RawHandler;
 const interactionType = Root.interactionType;
-const rawHandler = Root.rawHandler;
 
 pub const Dispatcher = struct {
     ready: ?RawHandler = null,
