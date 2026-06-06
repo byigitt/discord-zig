@@ -4,7 +4,10 @@ const Gateway = @import("protocol.zig");
 const raw_handler = @import("events/raw-handler.zig");
 const dispatcher = @import("events/dispatcher.zig");
 const message_interaction_handlers = @import("events/message-handlers.zig");
-const runtime_resource_handlers = @import("events/runtime-handlers.zig");
+
+test {
+    _ = @import("events/runtime-handlers.zig");
+}
 
 pub const ApplicationCommandPermissionsUpdate = Gateway.EventName.APPLICATION_COMMAND_PERMISSIONS_UPDATE;
 pub const AutoModerationActionExecution = Gateway.EventName.AUTO_MODERATION_ACTION_EXECUTION;

@@ -2,13 +2,15 @@ const std = @import("std");
 const Routes = @import("routes.zig");
 const Types = @import("../models/types.zig");
 
-const test_messages_interactions_guild = @import("client-tests/messages-test.zig");
-const test_threads_invites_webhooks = @import("client-tests/threads-test.zig");
-const test_users_channels = @import("client-tests/users-test.zig");
-const test_channels_roles = @import("client-tests/channels-test.zig");
-const test_emoji_lobby_stickers = @import("client-tests/emoji-test.zig");
-const test_soundboard_commands = @import("client-tests/soundboard-test.zig");
-const test_command_permissions_uploads = @import("client-tests/permissions-test.zig");
+test {
+    _ = @import("client-tests/messages-test.zig");
+    _ = @import("client-tests/threads-test.zig");
+    _ = @import("client-tests/users-test.zig");
+    _ = @import("client-tests/channels-test.zig");
+    _ = @import("client-tests/emoji-test.zig");
+    _ = @import("client-tests/soundboard-test.zig");
+    _ = @import("client-tests/permissions-test.zig");
+}
 
 pub const Header = struct {
     name: []const u8,
@@ -339,7 +341,7 @@ pub const Client = struct {
     pub const finishRequest = commands_interactions_request_methods.finishRequest;
 };
 
-const MultipartFilePathStream = struct {
+pub const MultipartFilePathStream = struct {
     allocator: std.mem.Allocator,
     boundary: []const u8,
     payload: Types.CreateMessage,
@@ -347,7 +349,7 @@ const MultipartFilePathStream = struct {
     file_sizes: []u64,
     content_length: u64,
 
-    fn init(
+    pub fn init(
         allocator: std.mem.Allocator,
         boundary: []const u8,
         payload: Types.CreateMessage,
@@ -377,11 +379,11 @@ const MultipartFilePathStream = struct {
         return stream;
     }
 
-    fn deinit(self: *MultipartFilePathStream) void {
+    pub fn deinit(self: *MultipartFilePathStream) void {
         self.allocator.free(self.file_sizes);
     }
 
-    fn bodyStream(self: *MultipartFilePathStream) BodyStream {
+    pub fn bodyStream(self: *MultipartFilePathStream) BodyStream {
         return .{
             .ptr = self,
             .content_length = self.content_length,

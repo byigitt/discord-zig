@@ -1,9 +1,11 @@
-const sendRestMessages = @import("send-rest/messages.zig");
-const sendRestUser = @import("send-rest/user-test.zig");
-const sendRestReactions = @import("send-rest/reactions.zig");
-const sendRestPins = @import("send-rest/pins-test.zig");
-const sendRestGuild = @import("send-rest/guild-test.zig");
-const sendRestWebhooks = @import("send-rest/webhooks-test.zig");
-const sendRestCommands = @import("send-rest/commands-test.zig");
-const sendRestPermissions = @import("send-rest/permissions.zig");
-const sendRestCleanup = @import("send-rest/cleanup-test.zig");
+test {
+    _ = @import("send-rest/messages.zig");
+    _ = @import("send-rest/user-test.zig");
+    _ = @import("send-rest/reactions.zig");
+    _ = @import("send-rest/pins-test.zig");
+    _ = @import("send-rest/guild-test.zig");
+    _ = @import("send-rest/webhooks-test.zig");
+    _ = @import("send-rest/commands-test.zig");
+    _ = @import("send-rest/permissions.zig");
+    _ = @import("send-rest/cleanup-test.zig");
+}

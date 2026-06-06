@@ -12,9 +12,11 @@ const message_details_polls = @import("types/message-polls.zig");
 const polls_message_payloads = @import("types/message-payloads.zig");
 const uploads_payload_writers = @import("types/upload-writers.zig");
 const json_query_writers = @import("types/json-writers.zig");
-const tests_guild_channel_payloads = @import("types/guild-tests.zig");
-const tests_user_lobby_message_payloads = @import("types/user-tests.zig");
-const tests_message_upload_flags = @import("types/upload-tests.zig");
+test {
+    _ = @import("types/guild-tests.zig");
+    _ = @import("types/user-tests.zig");
+    _ = @import("types/upload-tests.zig");
+}
 
 pub const User = identity_guild_onboarding.User;
 pub const StringPair = identity_guild_onboarding.StringPair;

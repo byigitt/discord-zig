@@ -4,8 +4,10 @@ const command_options_resolved_data = @import("mod/command-data.zig");
 const router_response_commands = @import("mod/router-response.zig");
 const command_registry_parsing = @import("mod/command-registry.zig");
 const json_helpers_aliases = @import("mod/json-aliases.zig");
-const tests_router_registry = @import("mod/router-tests.zig");
-const tests_validation_limits = @import("mod/validation-tests.zig");
+test {
+    _ = @import("mod/router-tests.zig");
+    _ = @import("mod/validation-tests.zig");
+}
 
 pub const InteractionType = component_primitives.InteractionType;
 pub const CallbackType = component_primitives.CallbackType;

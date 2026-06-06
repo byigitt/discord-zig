@@ -7,13 +7,15 @@ const Events = @import("../gateway/events.zig");
 const Gateway = @import("../gateway/protocol.zig");
 const CacheModule = @import("cache.zig");
 
-const test_multipart_files = @import("client-tests/files-test.zig");
-const test_send_rest = @import("client-tests/rest-test.zig");
-const test_event_registration = @import("client-tests/handlers-test.zig");
-const test_one_shot_listeners = @import("client-tests/listeners-test.zig");
-const test_cache_state = @import("client-tests/cache-test.zig");
-const test_event_convenience = @import("client-tests/events-test.zig");
-const test_gateway_runner = @import("client-tests/gateway-test.zig");
+test {
+    _ = @import("client-tests/files-test.zig");
+    _ = @import("client-tests/rest-test.zig");
+    _ = @import("client-tests/handlers-test.zig");
+    _ = @import("client-tests/listeners-test.zig");
+    _ = @import("client-tests/cache-test.zig");
+    _ = @import("client-tests/events-test.zig");
+    _ = @import("client-tests/gateway-test.zig");
+}
 
 const Cache = CacheModule.Cache;
 

@@ -11,7 +11,10 @@
 
 const transport_receive_audio = @import("voice/receive-audio.zig");
 const player_gateway_payloads = @import("voice/player-gateway.zig");
-const codec_test_helpers = @import("voice/codec-tests.zig");
+
+test {
+    _ = @import("voice/codec-tests.zig");
+}
 
 pub const gateway_version = transport_receive_audio.gateway_version;
 pub const VoiceIdentifyOptions = transport_receive_audio.VoiceIdentifyOptions;

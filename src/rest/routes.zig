@@ -3,9 +3,11 @@ const guilds_members = @import("routes/guild-members.zig");
 const bans_messages_threads = @import("routes/bans-messages.zig");
 const invites_webhooks_commands = @import("routes/webhook-invites.zig");
 const application_commands_interactions = @import("routes/app-commands.zig");
-const tests_threads_invites_guilds = @import("routes/thread-tests.zig");
-const tests_events_stage_assets = @import("routes/events-tests.zig");
-const tests_commands_webhooks = @import("routes/command-tests.zig");
+test {
+    _ = @import("routes/thread-tests.zig");
+    _ = @import("routes/events-tests.zig");
+    _ = @import("routes/command-tests.zig");
+}
 
 pub const Method = core_application_user.Method;
 pub const Route = core_application_user.Route;

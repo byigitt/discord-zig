@@ -3,13 +3,15 @@ const Snowflake = @import("../core/snowflake.zig").Snowflake;
 const Types = @import("../models/types.zig");
 const Collection = @import("../core/collection.zig").Collection;
 
-const test_ready_stats = @import("cache-tests/ready-test.zig");
-const test_messages_presence_voice = @import("cache-tests/presence-test.zig");
-const test_message_updates_reactions = @import("cache-tests/reactions-test.zig");
-const test_collections_guild_hydration = @import("cache-tests/collection-test.zig");
-const test_guild_resource_dispatch = @import("cache-tests/resources-test.zig");
-const test_invites_members_channels = @import("cache-tests/channels-test.zig");
-const test_thread_collections = @import("cache-tests/threads-test.zig");
+test {
+    _ = @import("cache-tests/ready-test.zig");
+    _ = @import("cache-tests/presence-test.zig");
+    _ = @import("cache-tests/reactions-test.zig");
+    _ = @import("cache-tests/collection-test.zig");
+    _ = @import("cache-tests/resources-test.zig");
+    _ = @import("cache-tests/channels-test.zig");
+    _ = @import("cache-tests/threads-test.zig");
+}
 
 pub const CachePolicy = struct {
     users: bool = true,
