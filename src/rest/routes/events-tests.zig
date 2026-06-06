@@ -2,7 +2,6 @@ const std = @import("std");
 const Snowflake = @import("../../core/snowflake.zig").Snowflake;
 
 const Root = @import("../routes.zig");
-const channel = Root.channel;
 const editChannel = Root.editChannel;
 const editChannelPermission = Root.editChannelPermission;
 const deleteChannelPermission = Root.deleteChannelPermission;
@@ -38,8 +37,6 @@ const userVoiceState = Root.userVoiceState;
 const editUserVoiceState = Root.editUserVoiceState;
 const currentUser = Root.currentUser;
 const editCurrentUser = Root.editCurrentUser;
-const user = Root.user;
-const guild = Root.guild;
 const guildScheduledEvents = Root.guildScheduledEvents;
 const createGuildScheduledEvent = Root.createGuildScheduledEvent;
 const guildScheduledEvent = Root.guildScheduledEvent;

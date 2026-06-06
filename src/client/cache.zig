@@ -1,7 +1,6 @@
 const std = @import("std");
 const Snowflake = @import("../core/snowflake.zig").Snowflake;
 const Types = @import("../models/types.zig");
-const Collection = @import("../core/collection.zig").Collection;
 
 test {
     _ = @import("cache-tests/ready-test.zig");

@@ -2,7 +2,6 @@ const std = @import("std");
 const Snowflake = @import("../../core/snowflake.zig").Snowflake;
 
 const Root = @import("../routes.zig");
-const guild = Root.guild;
 const guildMembers = Root.guildMembers;
 const searchGuildMembers = Root.searchGuildMembers;
 const editCurrentGuildMember = Root.editCurrentGuildMember;
@@ -15,7 +14,6 @@ const guildPruneCount = Root.guildPruneCount;
 const beginGuildPrune = Root.beginGuildPrune;
 const createGuildBan = Root.createGuildBan;
 const bulkGuildBan = Root.bulkGuildBan;
-const webhook = Root.webhook;
 const executeWebhookWithOptions = Root.executeWebhookWithOptions;
 const editGlobalApplicationCommand = Root.editGlobalApplicationCommand;
 const bulkOverwriteGuildApplicationCommands = Root.bulkOverwriteGuildApplicationCommands;

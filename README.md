@@ -63,6 +63,17 @@ The public module root stays at `src/discord.zig`. It re-exports the stable API 
 
 Implementation files are kept below 1000 lines. File and subdirectory names use short kebab-case path segments with at most two words, such as `message-polls.zig`, `app-commands.zig`, `lifecycle-events.zig`, and `cache-test.zig`, so contributors can open a file by responsibility without changing the public `discord.zig` entrypoint.
 
+## Development checks
+
+```sh
+zig build check-unused
+zig build test
+zig build
+```
+
+`zig build check-unused` runs a small repository-local scanner for unused private
+Zig `@import` and member alias `const` declarations.
+
 ## Example
 
 ```zig

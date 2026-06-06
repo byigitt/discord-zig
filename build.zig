@@ -35,6 +35,13 @@ pub fn build(b: *std.Build) void {
     const test_step = b.step("test", "Run unit tests");
     test_step.dependOn(&run_tests.step);
 
+    const check_unused_aliases = b.addSystemCommand(&.{
+        "python3",
+        "tools/check-unused-zig-consts.py",
+    });
+    const check_unused_step = b.step("check-unused", "Find unused private Zig import/member aliases");
+    check_unused_step.dependOn(&check_unused_aliases.step);
+
     const simple_examples = [_]struct { name: []const u8, path: []const u8 }{
         .{ .name = "ping_bot", .path = "examples/ping-bot.zig" },
         .{ .name = "slash_bot", .path = "examples/slash-bot.zig" },

@@ -30,8 +30,9 @@ The library is a practical replacement for basic to moderately complex Discord.j
 ## Validation commands
 
 ```sh
+zig build check-unused
 zig build test
 zig build
 ```
 
-Both commands are expected to pass before publishing or depending on a new commit.
+These commands are expected to pass before publishing or depending on a new commit.
