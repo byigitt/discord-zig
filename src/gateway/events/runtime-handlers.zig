@@ -1,6 +1,5 @@
 const std = @import("std");
 const Gateway = @import("../protocol.zig");
-const Interactions = @import("../../interactions/mod.zig");
 
 const Root = @import("../events.zig");
 const Dispatcher = Root.Dispatcher;

@@ -1,16 +1,7 @@
 const std = @import("std");
-const Intents = @import("../../core/intents.zig");
-const Rest = @import("../../rest/client.zig");
-const HttpTransport = @import("../../rest/http-transport.zig").HttpTransport;
-const Events = @import("../../gateway/events.zig");
-const Gateway = @import("../../gateway/protocol.zig");
-const GatewaySession = @import("../../gateway/session.zig");
 const CacheModule = @import("../cache.zig");
-const Interactions = @import("../../interactions/mod.zig");
-const Cache = CacheModule.Cache;
 const Types = @import("../../models/types.zig");
 const Snowflake = @import("../../core/snowflake.zig").Snowflake;
-const Root = @import("../client.zig");
 
 pub fn Methods(comptime Client: type) type {
     return struct {

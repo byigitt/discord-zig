@@ -1,6 +1,5 @@
 const std = @import("std");
 const Gateway = @import("../protocol.zig");
-const Snowflake = @import("../../core/snowflake.zig").Snowflake;
 
 /// Mirrors the `session_start_limit` object returned by the Discord
 /// `GET /gateway/bot` endpoint.

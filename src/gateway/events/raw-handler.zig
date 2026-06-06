@@ -1,8 +1,4 @@
-const std = @import("std");
 const Gateway = @import("../protocol.zig");
-const Interactions = @import("../../interactions/mod.zig");
-
-const Root = @import("../events.zig");
 
 pub const RawHandler = struct {
     ptr: *anyopaque,

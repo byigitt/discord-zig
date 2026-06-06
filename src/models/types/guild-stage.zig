@@ -1,8 +1,5 @@
-const std = @import("std");
 const Snowflake = @import("../../core/snowflake.zig").Snowflake;
 const Json = @import("../../core/json.zig");
-const Interactions = @import("../../interactions/mod.zig");
-const Permissions = @import("../../core/permissions.zig");
 
 const Root = @import("../types.zig");
 const WelcomeScreenChannel = Root.WelcomeScreenChannel;

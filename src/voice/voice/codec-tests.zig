@@ -11,7 +11,6 @@
 
 const std = @import("std");
 const Gateway = @import("../../gateway/protocol.zig");
-const Json = @import("../../core/json.zig");
 const Snowflake = @import("../../core/snowflake.zig").Snowflake;
 
 const Root = @import("../voice.zig");

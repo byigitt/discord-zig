@@ -1,10 +1,6 @@
 const std = @import("std");
 const Snowflake = @import("../../core/snowflake.zig").Snowflake;
-const Types = @import("../../models/types.zig");
 const Gateway = @import("../../gateway/protocol.zig");
-const Interactions = @import("../../interactions/mod.zig");
-const Permissions = @import("../../core/permissions.zig");
-const Collection = @import("../../core/collection.zig").Collection;
 
 const Root = @import("../cache.zig");
 const Cache = Root.Cache;

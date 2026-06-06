@@ -1,6 +1,4 @@
 const std = @import("std");
-const Api = @import("../../core/api.zig");
-const Routes = @import("../routes.zig");
 const Types = @import("../../models/types.zig");
 const Interactions = @import("../../interactions/mod.zig");
 const Snowflake = @import("../../core/snowflake.zig").Snowflake;

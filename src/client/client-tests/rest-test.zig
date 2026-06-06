@@ -1,6 +1,3 @@
-const Interactions = @import("../../interactions/mod.zig");
-const Types = @import("../../models/types.zig");
-const Snowflake = @import("../../core/snowflake.zig").Snowflake;
 const sendRestMessages = @import("send-rest/messages.zig");
 const sendRestUser = @import("send-rest/user-test.zig");
 const sendRestReactions = @import("send-rest/reactions.zig");

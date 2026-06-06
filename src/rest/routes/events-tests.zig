@@ -1,6 +1,5 @@
 const std = @import("std");
 const Snowflake = @import("../../core/snowflake.zig").Snowflake;
-const Types = @import("../../models/types.zig");
 
 const Root = @import("../routes.zig");
 const channel = Root.channel;
