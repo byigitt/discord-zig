@@ -9,11 +9,6 @@
 //! needed to drive the voice websocket and negotiate a media session; the
 //! actual audio transport is left to an external integration.
 
-const std = @import("std");
-const Gateway = @import("../gateway/protocol.zig");
-const Json = @import("../core/json.zig");
-const Snowflake = @import("../core/snowflake.zig").Snowflake;
-
 const transport_receive_audio = @import("voice/receive-audio.zig");
 const player_gateway_payloads = @import("voice/player-gateway.zig");
 const codec_test_helpers = @import("voice/codec-tests.zig");

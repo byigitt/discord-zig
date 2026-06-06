@@ -1,9 +1,3 @@
-const std = @import("std");
-const Snowflake = @import("../core/snowflake.zig").Snowflake;
-const Json = @import("../core/json.zig");
-const Interactions = @import("../interactions/mod.zig");
-const Permissions = @import("../core/permissions.zig");
-
 const identity_guild_onboarding = @import("types/identity-guild.zig");
 const onboarding_application_monetization = @import("types/app-onboarding.zig");
 const subscriptions_events_automod = @import("types/events-automod.zig");

@@ -5,7 +5,6 @@ const Rest = @import("../rest/client.zig");
 const HttpTransport = @import("../rest/http-transport.zig").HttpTransport;
 const Events = @import("../gateway/events.zig");
 const Gateway = @import("../gateway/protocol.zig");
-const GatewaySession = @import("../gateway/session.zig");
 const CacheModule = @import("cache.zig");
 
 const test_multipart_files = @import("client-tests/files-test.zig");
@@ -17,9 +16,6 @@ const test_event_convenience = @import("client-tests/events-test.zig");
 const test_gateway_runner = @import("client-tests/gateway-test.zig");
 
 const Cache = CacheModule.Cache;
-const Types = @import("../models/types.zig");
-const Interactions = @import("../interactions/mod.zig");
-const Snowflake = @import("../core/snowflake.zig").Snowflake;
 
 pub const ClientOptions = struct {
     token: []const u8,
